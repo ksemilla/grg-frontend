@@ -17,7 +17,6 @@ function Index() {
     getToken("uuid", "kevin@test.com").then((res) => setToken(res.data.token))
   }
 
-
   return (
     <div className="max-w-sm m-auto pt-24 space-y-8">
       <p className="text-xl italic">
@@ -39,7 +38,7 @@ function Index() {
           params={{ roomUuid: "uuid" }}
           className="text-black"
         >
-          Go to room
+          Go to room1
         </Link>
       </Button>
       <Button asChild>
