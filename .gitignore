@@ -7,18 +7,61 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Diagnostic reports (next.js / vite)
+.pnp
+.pnp.js
 
-# Editor directories and files
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+out/
+
+# TanStack Router temporary/cache files (Keep routeTree.gen.ts tracked)
+.tanstack/
+
+# Environment Variables & Secrets (CRITICAL to prevent committing keys!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+*.env.*
+
+# Firebase Cache
+.firebase/
+
+# Editor / IDE configuration directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+!.vscode/launch.json
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# OS artifacts
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Testing / Coverage
+coverage/
+.nyc_output/
+
+# Cypress/Playwright videos/screenshots
+cypress/screenshots/
+cypress/videos/
+playwright-report/
+test-results/
