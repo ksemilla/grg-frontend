@@ -6,9 +6,6 @@ import { useState } from "react"
 
 import QRCode from "react-qr-code"
 
-import { motion } from "framer-motion"
-import { Score } from "@/components/Score"
-
 export const Route = createFileRoute("/")({
   component: Index,
 })
@@ -19,41 +16,7 @@ function Index() {
   const login = () => {
     getToken("uuid", "kevin@test.com").then((res) => setToken(res.data.token))
   }
-  const [value, setValue] = useState(100)
 
-  const container = {
-    show: {
-      transition: {
-        staggerChildren: 0.15,
-      },
-    },
-  }
-
-  const item = {
-    hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0 },
-  }
-  // return (
-  //   <div className="border min-h-svh flex justify-center items-center">
-  //     <motion.div
-  //       initial={{ scale: 0.8, opacity: 0 }}
-  //       animate={{ scale: 1, opacity: 100 }}
-  //       transition={{
-  //         duration: 0.2,
-  //         ease: "easeOut",
-  //       }}
-  //     >
-  //       <Button onClick={() => setValue((p) => p + 100)}>Start</Button>
-  //     </motion.div>
-  //     <Score value={value} />
-  //     <motion.div initial="hidden" animate="show" variants={container}>
-  //       <motion.h1 variants={item}>H!</motion.h1>
-  //       <motion.div variants={item}>ASDASDASD</motion.div>
-  //       <motion.div variants={item}>ASDASDASDASDASD</motion.div>
-  //       <motion.button variants={item}>ASDADASDASDA</motion.button>
-  //     </motion.div>
-  //   </div>
-  // )
 
   return (
     <div className="max-w-sm m-auto pt-24 space-y-8">
