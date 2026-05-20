@@ -359,6 +359,7 @@ function RouteComponent() {
             <Link
               to="/room/$roomUuid/scorers"
               params={{ roomUuid }}
+              search={{ code: roomStore.code ?? "", token: roomStore.token ?? "" }}
               className="w-full"
             >
               <Button
