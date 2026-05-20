@@ -1,8 +1,8 @@
 import { useRoomStore } from "@/stores/roomStore"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { type Transition } from "motion/react"
 import * as motion from "motion/react-client"
-import { Trophy, Medal, Timer, Award } from "lucide-react"
+import { Trophy, Medal, Timer, Award, ArrowLeft } from "lucide-react"
 
 const spring: Transition = {
   type: "spring",
@@ -12,11 +12,16 @@ const spring: Transition = {
 
 export const Route = createFileRoute("/room/$roomUuid/scorers")({
   component: RouteComponent,
+  validateSearch: (search: Record<string, string>) => ({
+    code: search.code ?? "",
+    token: search.token ?? "",
+  }),
 })
 
 function RouteComponent() {
   const { roomUuid } = Route.useParams()
   const roomStore = useRoomStore()
+  const search = Route.useSearch()
 
   const filtered = roomStore.value?.players.filter((pn) => pn.score) ?? []
   const sorted = [...filtered].sort((a, b) => b.score - a.score).slice(0, 5)
@@ -52,6 +57,19 @@ function RouteComponent() {
       {/* Background glowing effects */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-600/5 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Back Button */}
+      <div className="absolute top-4 left-4 z-20">
+        <Link
+          to="/room/$roomUuid"
+          params={{ roomUuid }}
+          search={search}
+          className="inline-flex items-center gap-2 bg-slate-900/80 backdrop-blur-md border border-slate-800 px-3 py-2 rounded-xl text-xs text-slate-400 hover:text-slate-200 hover:border-slate-700 transition-all shadow-lg"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to Lobby
+        </Link>
+      </div>
 
       {/* Leaderboard Card */}
       <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10 space-y-6 animate-in fade-in zoom-in duration-300">
