@@ -42,7 +42,11 @@ export function useRoomSocket(
   useEffect(() => {
     let shouldReconnect = true
     const connect = () => {
-      let BASE_URL = `${BASE_WS}/${roomUuid}/?code=${code}`
+      let wsRoot = BASE_WS
+      if (!wsRoot.endsWith("/ws") && !wsRoot.endsWith("/ws/")) {
+        wsRoot = wsRoot.replace(/\/$/, "") + "/ws"
+      }
+      let BASE_URL = `${wsRoot}/${roomUuid}/?code=${code}`
       if (token) {
         BASE_URL = `${BASE_URL}&token=${token}`
       }

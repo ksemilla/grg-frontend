@@ -41,14 +41,20 @@ function RouteComponent() {
   }, [code, token])
   return (
     <>
-      <div className="fixed top-4 right-4">
+      <div className="fixed top-4 right-4 z-30">
         {roomStore.isAdmin && (
           <Link
             to="/room/$roomUuid/admin"
-            params={{ roomUuid: "uuid" }}
+            params={{ roomUuid }}
             search={{ code: roomStore.code, token: roomStore.token }}
+            className="inline-flex p-2.5 bg-slate-900/80 hover:bg-slate-800 text-rose-400 hover:text-rose-350 border border-slate-800 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 group relative cursor-pointer"
           >
-            <ShieldIcon size={35} />
+            <ShieldIcon className="w-5 h-5 drop-shadow-[0_0_8px_rgba(244,63,94,0.3)] group-hover:drop-shadow-[0_0_12px_rgba(244,63,94,0.6)] transition-all" />
+            
+            {/* Tooltip */}
+            <span className="absolute right-0 top-12 scale-0 transition-all rounded bg-slate-950 p-1.5 text-[10px] text-slate-400 border border-slate-800 whitespace-nowrap group-hover:scale-100 font-medium">
+              Host Control Center
+            </span>
           </Link>
         )}
       </div>
