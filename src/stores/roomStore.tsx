@@ -5,6 +5,7 @@ type Player = {
   name: string
   score: number
   time: string
+  team?: string
 }
 
 type RoomValue = {

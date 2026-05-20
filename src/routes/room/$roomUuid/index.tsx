@@ -3,7 +3,7 @@ import { MemoryGame } from "@/features/memory-game/memory-game"
 import { useRoomStore } from "@/stores/roomStore"
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
-import { Play, Trophy, Share2, Timer, Sparkles, Swords, Gauge } from "lucide-react"
+import { Play, Trophy, Timer, Sparkles, Swords, Gauge } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -35,7 +35,7 @@ function RouteComponent() {
 
   // State to track if the player is actively playing
   const [isPlaying, setIsPlaying] = useState(false)
-  const [nPairs, setNPairs] = useState(6) // Default 6 pairs (12 tiles)
+  const [nPairs, setNPairs] = useState<6 | 8 | 10>(6) // Default 6 pairs (12 tiles)
   const [shareMsg, setShareMsg] = useState("")
   const [isDiffModalOpen, setIsDiffModalOpen] = useState(false)
 
