@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting...</title>
+    <script>
+      // Cloudflare Pages SPA fallback:
+      // Store the path in sessionStorage and redirect to root,
+      // then the main app will pick up the path and navigate correctly.
+      sessionStorage.setItem("spa_redirect", location.pathname + location.search + location.hash);
+      location.replace("/");
+    </script>
+  </head>
+</html>
