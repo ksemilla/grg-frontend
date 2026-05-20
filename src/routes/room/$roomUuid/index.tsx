@@ -70,7 +70,7 @@ function RouteComponent() {
 
   const onFinish = (data: { score: number; time: string }) => {
     const { score, time } = data
-    
+
     // Save to local storage for menu rendering
     localStorage.setItem("prev_score", String(score))
     localStorage.setItem("prev_time", time)
@@ -87,7 +87,7 @@ function RouteComponent() {
     setIsPlaying(false)
   }
 
-  const handleStartGame = (pairs: number) => {
+  const handleStartGame = (pairs: 6 | 8 | 10) => {
     setNPairs(pairs)
     setIsDiffModalOpen(false)
     setIsPlaying(true)
@@ -114,9 +114,11 @@ function RouteComponent() {
   if (!roomStore.code || !name) return
 
   // Read team from DB if loaded, falling back to local storage
-  const myPlayer = roomStore.value?.players.find(p => p.uuid === localStorage.getItem("uuid"))
+  const myPlayer = roomStore.value?.players.find(
+    (p) => p.uuid === localStorage.getItem("uuid")
+  )
   const team = myPlayer?.team || localStorage.getItem("team") || ""
-  
+
   const handleSwitchTeam = () => {
     const nextTeam = team === "boy" ? "girl" : "boy"
     const playerUuid = localStorage.getItem("uuid")
@@ -134,21 +136,23 @@ function RouteComponent() {
     if (team === "boy") {
       return {
         text: "text-sky-400 font-extrabold",
-        badge: "bg-sky-500/10 text-sky-400 border-sky-500/25 hover:border-sky-500/50 hover:bg-sky-500/15",
-        label: "👦 Team Boy"
+        badge:
+          "bg-sky-500/10 text-sky-400 border-sky-500/25 hover:border-sky-500/50 hover:bg-sky-500/15",
+        label: "👦 Team Boy",
       }
     }
     if (team === "girl") {
       return {
         text: "text-pink-400 font-extrabold",
-        badge: "bg-pink-500/10 text-pink-400 border-pink-500/25 hover:border-pink-500/50 hover:bg-pink-500/15",
-        label: "👧 Team Girl"
+        badge:
+          "bg-pink-500/10 text-pink-400 border-pink-500/25 hover:border-pink-500/50 hover:bg-pink-500/15",
+        label: "👧 Team Girl",
       }
     }
     return {
       text: "text-violet-400 font-semibold",
       badge: "hidden",
-      label: ""
+      label: "",
     }
   }
 
@@ -165,7 +169,7 @@ function RouteComponent() {
         <div className="absolute top-4 left-4 z-20">
           <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 px-4 py-2 rounded-xl flex items-center gap-3 text-xs shadow-lg shadow-black/30">
             <span className="text-slate-400 flex items-center gap-2">
-              Playing as: <strong className={teamStyles.text}>{name}</strong> 
+              Playing as: <strong className={teamStyles.text}>{name}</strong>
               {team && (
                 <button
                   onClick={handleSwitchTeam}
@@ -173,7 +177,8 @@ function RouteComponent() {
                   title="Click to switch teams!"
                   type="button"
                 >
-                  {teamStyles.label} <span className="text-[8px] opacity-60">⇄</span>
+                  {teamStyles.label}{" "}
+                  <span className="text-[8px] opacity-60">⇄</span>
                 </button>
               )}
             </span>
@@ -206,7 +211,7 @@ function RouteComponent() {
       <div className="absolute top-4 left-4 z-20">
         <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 px-4 py-2 rounded-xl flex items-center gap-3 text-xs shadow-lg shadow-black/30">
           <span className="text-slate-400 flex items-center gap-2">
-            Claimed Seat: <strong className={teamStyles.text}>{name}</strong> 
+            Claimed Seat: <strong className={teamStyles.text}>{name}</strong>
             {team && (
               <button
                 onClick={handleSwitchTeam}
@@ -214,7 +219,8 @@ function RouteComponent() {
                 title="Click to switch teams!"
                 type="button"
               >
-                {teamStyles.label} <span className="text-[8px] opacity-60">⇄</span>
+                {teamStyles.label}{" "}
+                <span className="text-[8px] opacity-60">⇄</span>
               </button>
             )}
           </span>
@@ -230,7 +236,6 @@ function RouteComponent() {
 
       {/* Main Lobby Card */}
       <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10 space-y-6 animate-in fade-in zoom-in duration-300">
-        
         {/* Header Block */}
         <div className="text-center space-y-2">
           <div className="inline-flex p-3 bg-violet-500/10 text-violet-400 rounded-xl border border-violet-500/20 mb-2">
@@ -250,8 +255,12 @@ function RouteComponent() {
             <div className="flex items-center gap-3">
               <Trophy className="w-5 h-5 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.3)]" />
               <div className="flex flex-col">
-                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Previous Run</span>
-                <span className="font-semibold text-slate-200 text-xs">Score: {prevScore} pts</span>
+                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
+                  Previous Run
+                </span>
+                <span className="font-semibold text-slate-200 text-xs">
+                  Score: {prevScore} pts
+                </span>
               </div>
             </div>
             {prevTime && (
@@ -267,9 +276,7 @@ function RouteComponent() {
           {/* Start New Game (Difficulty Selection Trigger) */}
           <Dialog open={isDiffModalOpen} onOpenChange={setIsDiffModalOpen}>
             <DialogTrigger asChild>
-              <Button 
-                className="w-full h-12 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-violet-600/20 transition-all flex items-center justify-center gap-2 group text-sm cursor-pointer"
-              >
+              <Button className="w-full h-12 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-violet-600/20 transition-all flex items-center justify-center gap-2 group text-sm cursor-pointer">
                 <Play className="w-4 h-4 fill-white group-hover:scale-110 transition-transform" />
                 Start New Game
               </Button>
@@ -280,7 +287,9 @@ function RouteComponent() {
                   <div className="inline-flex p-2.5 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20 mb-1.5">
                     <Gauge className="w-5 h-5" />
                   </div>
-                  <DialogTitle className="text-xl font-bold">Select Difficulty</DialogTitle>
+                  <DialogTitle className="text-xl font-bold">
+                    Select Difficulty
+                  </DialogTitle>
                   <DialogDescription className="text-slate-400 text-xs">
                     Choose how many memory tiles you want to match!
                   </DialogDescription>
@@ -293,8 +302,12 @@ function RouteComponent() {
                     className="w-full p-4 bg-slate-950/60 border border-slate-850 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-xl flex items-center justify-between transition-all group text-left cursor-pointer"
                   >
                     <div className="flex flex-col">
-                      <span className="text-xs font-extrabold uppercase text-emerald-400 tracking-wider">🟢 Easy Mode</span>
-                      <span className="text-[10px] text-slate-500 mt-0.5">Quick and casual memory matchup</span>
+                      <span className="text-xs font-extrabold uppercase text-emerald-400 tracking-wider">
+                        🟢 Easy Mode
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5">
+                        Quick and casual memory matchup
+                      </span>
                     </div>
                     <span className="bg-slate-900 border border-slate-800 px-3 py-1 rounded-lg text-xs font-mono text-slate-300 font-bold group-hover:text-emerald-400 transition-colors">
                       12 Tiles
@@ -307,8 +320,12 @@ function RouteComponent() {
                     className="w-full p-4 bg-slate-950/60 border border-slate-850 hover:bg-violet-500/10 hover:border-violet-500/30 rounded-xl flex items-center justify-between transition-all group text-left cursor-pointer"
                   >
                     <div className="flex flex-col">
-                      <span className="text-xs font-extrabold uppercase text-violet-400 tracking-wider">🔵 Normal Mode</span>
-                      <span className="text-[10px] text-slate-500 mt-0.5">Standard gridlock memory challenge</span>
+                      <span className="text-xs font-extrabold uppercase text-violet-400 tracking-wider">
+                        🔵 Normal Mode
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5">
+                        Standard gridlock memory challenge
+                      </span>
                     </div>
                     <span className="bg-slate-900 border border-slate-800 px-3 py-1 rounded-lg text-xs font-mono text-slate-300 font-bold group-hover:text-violet-400 transition-colors">
                       16 Tiles
@@ -321,8 +338,12 @@ function RouteComponent() {
                     className="w-full p-4 bg-slate-950/60 border border-slate-850 hover:bg-amber-500/10 hover:border-amber-500/30 rounded-xl flex items-center justify-between transition-all group text-left cursor-pointer"
                   >
                     <div className="flex flex-col">
-                      <span className="text-xs font-extrabold uppercase text-amber-400 tracking-wider">🔥 Hard Mode</span>
-                      <span className="text-[10px] text-slate-500 mt-0.5">Test your maximum recall potential</span>
+                      <span className="text-xs font-extrabold uppercase text-amber-400 tracking-wider">
+                        🔥 Hard Mode
+                      </span>
+                      <span className="text-[10px] text-slate-500 mt-0.5">
+                        Test your maximum recall potential
+                      </span>
                     </div>
                     <span className="bg-slate-900 border border-slate-800 px-3 py-1 rounded-lg text-xs font-mono text-slate-300 font-bold group-hover:text-amber-400 transition-colors">
                       20 Tiles
@@ -340,7 +361,7 @@ function RouteComponent() {
               params={{ roomUuid }}
               className="w-full"
             >
-              <Button 
+              <Button
                 variant="outline"
                 className="w-full h-10 bg-slate-950 border-slate-800 hover:bg-slate-900 hover:border-violet-500/30 text-slate-300 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
               >
@@ -350,7 +371,7 @@ function RouteComponent() {
             </Link>
 
             {/* Challenge Button (Share link) */}
-            <Button 
+            <Button
               onClick={handleShareChallenge}
               variant="outline"
               className="w-full h-10 bg-slate-950 border-slate-800 hover:bg-slate-900 hover:border-cyan-500/30 text-slate-300 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
@@ -368,7 +389,7 @@ function RouteComponent() {
           </p>
         )}
       </div>
-      
+
       <p className="absolute bottom-6 text-[10px] text-slate-600 font-mono">
         ROOM ID: {roomUuid}
       </p>
