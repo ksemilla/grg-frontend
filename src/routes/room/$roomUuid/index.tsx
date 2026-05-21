@@ -122,7 +122,7 @@ function RouteComponent() {
           token: roomStore.token,
         },
       })
-    } else if (roomStore.value && !myPlayer && !localStorage.getItem("name")) {
+    } else if (roomStore.value && !myPlayer) {
       navigate({
         to: "/room/$roomUuid/set-name",
         params: {

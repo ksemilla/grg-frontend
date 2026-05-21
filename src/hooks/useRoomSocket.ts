@@ -92,6 +92,12 @@ export function useRoomSocket(
             roomStore.setValue(event.room)
             break
           case "set.player": {
+            if (event.player_name) {
+              localStorage.setItem("name", String(event.player_name))
+            }
+            if (event.team) {
+              localStorage.setItem("team", String(event.team))
+            }
             const finalCode = (typeof code === "string" ? code : null) || roomStore.code || ""
             navigate({
               to: "/room/$roomUuid",

@@ -7,7 +7,7 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, Link } from "@tanstack/react-router"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useMessage } from "@/components/message-provider"
@@ -25,23 +25,14 @@ function RouteComponent() {
   const hasExistingName = !!myPlayer?.name
   const [name, setName] = useState("")
   const { sendMessage } = useMessage()
-  const navigate = useNavigate()
 
   const setPlayer = (player_name: string, team: "boy" | "girl") => {
     if (uuid) {
-      localStorage.setItem("team", team)
-      localStorage.setItem("name", player_name) // Instantly store name to prevent race conditions
       sendMessage({
         type: "set_player",
         uuid,
         player_name,
         team,
-      })
-      // Immediately navigate back to lobby
-      navigate({
-        to: "/room/$roomUuid",
-        params: { roomUuid },
-        search: { code: roomStore.code ?? "" }
       })
     }
   }
