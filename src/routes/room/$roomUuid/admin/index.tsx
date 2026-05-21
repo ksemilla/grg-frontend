@@ -1,6 +1,5 @@
 import { useMessage } from "@/components/message-provider"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -21,6 +20,200 @@ export const Route = createFileRoute("/room/$roomUuid/admin/")({
 type AdminSearchParams = {
   code?: string
   token?: string
+}
+
+interface PlayerEditDialogProps {
+  pn: any
+  isOccupied: boolean
+  isBlocked: boolean
+  displayName: string
+  badgeStyle: string
+  badgeText: string
+  clearPlayer: (uuid: string, name: string) => void
+  blockPlayer: (uuid: string) => void
+  unblockPlayer: (uuid: string) => void
+  sendMessage: (msg: any) => void
+}
+
+function PlayerEditDialog({
+  pn,
+  isOccupied,
+  isBlocked,
+  displayName,
+  badgeStyle,
+  badgeText,
+  clearPlayer,
+  blockPlayer,
+  unblockPlayer,
+  sendMessage,
+}: PlayerEditDialogProps) {
+  const [name, setName] = useState(pn.name || "")
+  const [score, setScore] = useState(pn.score || 0)
+  const [team, setTeam] = useState<"boy" | "girl" | "">(pn.team || "")
+  const [isPlayerAdmin, setIsPlayerAdmin] = useState(pn.is_admin || false)
+  const [isPlayerBlocked, setIsPlayerBlocked] = useState(pn.is_blocked || false)
+  const [isOpen, setIsOpen] = useState(false)
+
+  const handleSave = () => {
+    sendMessage({
+      type: "admin_edit_player",
+      target_uuid: pn.uuid,
+      name,
+      score: Number(score),
+      team,
+      is_admin: isPlayerAdmin,
+      is_blocked: isPlayerBlocked,
+    })
+    setIsOpen(false)
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <div className={`p-3 bg-slate-950/30 border rounded-xl transition-all cursor-pointer flex justify-between items-center group hover:scale-[1.01] active:scale-[0.99] ${isBlocked ? "border-rose-950 bg-rose-950/5 hover:border-rose-800" : "border-slate-800/85 hover:border-slate-700/80"}`}>
+          <div className="flex flex-col text-left">
+            <span className={`font-semibold text-sm tracking-wide ${isBlocked ? "text-rose-450" : "text-slate-200"}`}>{displayName}</span>
+            {isOccupied && !isBlocked && (
+              <span className="text-[10px] text-slate-500 font-mono mt-0.5">
+                Score: {pn.score || 0} • Team: {pn.team === "boy" ? "Mateus" : pn.team === "girl" ? "Meira" : "None"}
+              </span>
+            )}
+          </div>
+          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${badgeStyle}`}>{badgeText}</span>
+        </div>
+      </DialogTrigger>
+      <DialogContent className="bg-slate-900 border-slate-800 text-slate-100 max-w-sm rounded-xl overflow-y-auto max-h-[90vh]">
+        <div className="space-y-4 py-3 text-left">
+          <div className="text-center">
+            <div className={`inline-flex p-3 rounded-full border mb-2 ${isBlocked ? "bg-rose-500/10 text-rose-500 border-rose-500/20" : "bg-slate-500/10 text-slate-400 border-slate-500/20"}`}>
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <DialogTitle className="text-lg font-bold text-center">
+              Edit Player Profile
+            </DialogTitle>
+            <DialogDescription className="text-slate-400 text-xs mt-0.5">
+              Modify name, score, team, and operational flags.
+            </DialogDescription>
+          </div>
+
+          <div className="space-y-3 pt-2 border-t border-slate-800">
+            {/* Name Input */}
+            <div className="space-y-1">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-450">Player Name</label>
+              <Input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="bg-slate-950 border-slate-850 text-slate-100 text-xs font-semibold h-8.5"
+                placeholder="Enter player name..."
+              />
+            </div>
+
+            {/* Score Input */}
+            <div className="space-y-1">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-450">Accumulated Score</label>
+              <Input
+                type="number"
+                value={score}
+                onChange={(e) => setScore(Number(e.target.value))}
+                className="bg-slate-950 border-slate-850 text-slate-100 text-xs font-mono font-semibold h-8.5"
+                placeholder="0"
+                min={0}
+              />
+            </div>
+
+            {/* Team Dropdown */}
+            <div className="space-y-1">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-450">Tournament Team</label>
+              <select
+                value={team}
+                onChange={(e) => setTeam(e.target.value as any)}
+                className="w-full h-8.5 bg-slate-950 border border-slate-850 text-xs font-semibold rounded-lg px-2 text-slate-350 outline-hidden cursor-pointer"
+              >
+                <option value="">None / Solo</option>
+                <option value="boy">Team Mateus (👦 Boy)</option>
+                <option value="girl">Team Meira (👧 Girl)</option>
+              </select>
+            </div>
+
+            {/* Flags */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              {/* Is Admin */}
+              <label className="flex items-center gap-2 bg-slate-950/40 border border-slate-850 p-2 rounded-lg cursor-pointer hover:border-slate-800 transition-all select-none">
+                <input
+                  type="checkbox"
+                  checked={isPlayerAdmin}
+                  onChange={(e) => setIsPlayerAdmin(e.target.checked)}
+                  className="rounded-xs border-slate-850 text-rose-600 bg-slate-950 focus:ring-0 w-3.5 h-3.5"
+                />
+                <span className="text-[10px] font-extrabold uppercase text-slate-350">Admin</span>
+              </label>
+
+              {/* Is Blocked */}
+              <label className="flex items-center gap-2 bg-slate-950/40 border border-slate-850 p-2 rounded-lg cursor-pointer hover:border-slate-800 transition-all select-none">
+                <input
+                  type="checkbox"
+                  checked={isPlayerBlocked}
+                  onChange={(e) => setIsPlayerBlocked(e.target.checked)}
+                  className="rounded-xs border-slate-850 text-rose-600 bg-slate-950 focus:ring-0 w-3.5 h-3.5"
+                />
+                <span className="text-[10px] font-extrabold uppercase text-slate-350">Blocked</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-3 border-t border-slate-850">
+            <Button
+              onClick={handleSave}
+              className="flex-1 h-9.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-[10px] uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-950/30 active:scale-95 transition-all cursor-pointer"
+            >
+              💾 Save Changes
+            </Button>
+          </div>
+
+          {/* Quick Actions Panel */}
+          <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-800/60">
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-500 mb-1">Danger Quick Actions</span>
+            {isBlocked ? (
+              <Button
+                onClick={() => {
+                  unblockPlayer(pn.uuid)
+                  setIsOpen(false)
+                }}
+                className="w-full h-8.5 bg-emerald-950/30 hover:bg-emerald-950/50 border border-emerald-900/50 text-emerald-400 font-extrabold text-[9px] uppercase tracking-wider rounded-xl active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" /> Unblock &amp; Reset
+              </Button>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={() => {
+                    clearPlayer(pn.uuid, pn.name)
+                    setIsOpen(false)
+                  }}
+                  variant="destructive"
+                  className="h-8.5 bg-rose-950/30 hover:bg-rose-950/50 border border-rose-900/50 text-rose-400 font-extrabold text-[9px] uppercase tracking-wider rounded-xl active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1"
+                >
+                  <LogOut className="w-3.5 h-3.5" /> Evict Slot
+                </Button>
+                <Button
+                  disabled={!isOccupied}
+                  onClick={() => {
+                    blockPlayer(pn.uuid)
+                    setIsOpen(false)
+                  }}
+                  variant="outline"
+                  className="h-8.5 bg-slate-950 border border-slate-850 hover:bg-rose-950/20 hover:text-rose-450 hover:border-rose-900/50 text-slate-500 font-extrabold text-[9px] uppercase tracking-wider rounded-xl active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1"
+                >
+                  <Ban className="w-3.5 h-3.5" /> Block Device
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 function RouteComponent() {
@@ -74,10 +267,6 @@ function RouteComponent() {
 
   const unblockPlayer = (target_uuid: string) => {
     if (target_uuid) sendMessage({ type: "unblock_player", target_uuid })
-  }
-
-  const makeAdmin = (target_uuid: string) => {
-    if (target_uuid) sendMessage({ type: "make_admin", target_uuid })
   }
 
   const force = () => sendMessage({ type: "force_update" })
@@ -237,48 +426,19 @@ function RouteComponent() {
                   else if (isOccupied) { badgeText = "Active"; badgeStyle = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" }
 
                   return (
-                    <Dialog key={pn.uuid || pn.name}>
-                      <DialogTrigger asChild>
-                        <Card className={`p-4 bg-slate-950/30 border transition-all cursor-pointer flex justify-between items-center group ${isBlocked ? "border-rose-950 bg-rose-950/5 hover:border-rose-800" : "border-slate-800/80 hover:border-slate-700/80"}`}>
-                          <span className={`font-semibold text-sm tracking-wide ${isBlocked ? "text-rose-400" : "text-slate-200"}`}>{displayName}</span>
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${badgeStyle}`}>{badgeText}</span>
-                        </Card>
-                      </DialogTrigger>
-                      <DialogContent className="bg-slate-900 border-slate-800 text-slate-100 max-w-sm rounded-xl">
-                        <div className="space-y-4 text-center py-4">
-                          <div className={`inline-flex p-3 rounded-full border mb-2 ${isBlocked ? "bg-rose-500/10 text-rose-500 border-rose-500/20" : "bg-slate-500/10 text-slate-400 border-slate-500/20"}`}>
-                            <ShieldCheck className="w-8 h-8" />
-                          </div>
-                          <DialogTitle className="text-xl font-bold text-center">
-                            {isBlocked ? "Unblock Session" : `Manage Player: ${pn.name || "Vacant Slot"}`}
-                          </DialogTitle>
-                          <DialogDescription className="text-slate-400 text-xs">
-                            {isBlocked ? "Restore access for this device." : isOccupied ? "Control connectivity and access rights." : "No player has claimed this slot yet."}
-                          </DialogDescription>
-                          <div className="flex flex-col gap-2 pt-3">
-                            {isBlocked ? (
-                              <Button onClick={() => unblockPlayer(pn.uuid)} className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium flex items-center justify-center gap-1.5 h-10 cursor-pointer">
-                                <ShieldCheck className="w-4 h-4" /> Unblock Session
-                              </Button>
-                            ) : (
-                              <>
-                                <Button onClick={() => clearPlayer(pn.uuid, pn.name)} variant="destructive" className="bg-rose-600 hover:bg-rose-500 text-white font-medium flex items-center justify-center gap-1.5 h-10 cursor-pointer">
-                                  <LogOut className="w-4 h-4" /> Evict / Clear Seat
-                                </Button>
-                                <Button disabled={!isOccupied} onClick={() => blockPlayer(pn.uuid)} variant="outline" className="bg-slate-950 border-slate-800 hover:bg-rose-950/20 hover:text-rose-400 hover:border-rose-900/50 text-slate-400 flex items-center justify-center gap-1.5 h-10 cursor-pointer">
-                                  <Ban className="w-4 h-4" /> Block &amp; Clear Name
-                                </Button>
-                                {!isAdmin && isOccupied && (
-                                  <Button onClick={() => makeAdmin(pn.uuid)} variant="outline" className="bg-slate-950 border-slate-800 hover:bg-violet-950/20 hover:text-violet-400 hover:border-violet-900/50 text-slate-400 flex items-center justify-center gap-1.5 h-10 cursor-pointer">
-                                    <ShieldCheck className="w-4 h-4" /> Promote to Admin
-                                  </Button>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                    <PlayerEditDialog
+                      key={pn.uuid || pn.name}
+                      pn={pn}
+                      isOccupied={isOccupied}
+                      isBlocked={isBlocked}
+                      displayName={displayName}
+                      badgeStyle={badgeStyle}
+                      badgeText={badgeText}
+                      clearPlayer={clearPlayer}
+                      blockPlayer={blockPlayer}
+                      unblockPlayer={unblockPlayer}
+                      sendMessage={sendMessage}
+                    />
                   )
                 })
               })()
