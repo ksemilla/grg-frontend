@@ -26,6 +26,10 @@ function RouteComponent() {
   const filtered = roomStore.value?.players.filter((pn) => pn.score && !pn.is_blocked) ?? []
   const sorted = [...filtered].sort((a, b) => b.score - a.score).slice(0, 5)
 
+  const boyTotal = filtered.filter(p => p.team === "boy").reduce((sum, p) => sum + p.score, 0)
+  const girlTotal = filtered.filter(p => p.team === "girl").reduce((sum, p) => sum + p.score, 0)
+  const leading = boyTotal > girlTotal ? "boy" : girlTotal > boyTotal ? "girl" : "tie"
+
   const getRankBadge = (index: number) => {
     switch (index) {
       case 0:
@@ -86,6 +90,41 @@ function RouteComponent() {
             The quickest minds and highest scores in the current active room.
           </p>
         </div>
+
+        {/* Team Totals Banner */}
+        {(boyTotal > 0 || girlTotal > 0) && (
+          <div className="grid grid-cols-2 gap-3">
+            {/* Team Boy */}
+            <div className={`relative flex flex-col items-center gap-1 p-4 rounded-xl border transition-all ${
+              leading === "boy"
+                ? "border-sky-500/50 bg-sky-500/10 shadow-[0_0_20px_rgba(14,165,233,0.1)]"
+                : "border-slate-800 bg-slate-950/30"
+            }`}>
+              {leading === "boy" && (
+                <span className="absolute -top-2.5 text-base">👑</span>
+              )}
+              <span className="text-2xl">👦</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-sky-400">Team Boy</span>
+              <span className="font-black text-xl text-sky-300 font-mono">{boyTotal.toLocaleString()}</span>
+              <span className="text-[9px] text-slate-500 uppercase tracking-wider">total pts</span>
+            </div>
+
+            {/* Team Girl */}
+            <div className={`relative flex flex-col items-center gap-1 p-4 rounded-xl border transition-all ${
+              leading === "girl"
+                ? "border-pink-500/50 bg-pink-500/10 shadow-[0_0_20px_rgba(236,72,153,0.1)]"
+                : "border-slate-800 bg-slate-950/30"
+            }`}>
+              {leading === "girl" && (
+                <span className="absolute -top-2.5 text-base">👑</span>
+              )}
+              <span className="text-2xl">👧</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-pink-400">Team Girl</span>
+              <span className="font-black text-xl text-pink-300 font-mono">{girlTotal.toLocaleString()}</span>
+              <span className="text-[9px] text-slate-500 uppercase tracking-wider">total pts</span>
+            </div>
+          </div>
+        )}
 
         {/* Podium List */}
         <div className="space-y-3">

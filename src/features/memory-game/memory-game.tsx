@@ -4,8 +4,8 @@ import { RenderIcon } from "../../components/RenderIcon"
 import { cn } from "../../utils"
 import { availableIcons, type AvailableIcon } from "./const"
 import { Score } from "@/components/Score"
-import { motion, AnimatePresence } from "framer-motion"
-import { Timer, Trophy, RotateCcw, Home, Sparkles, HelpCircle } from "lucide-react"
+import { motion, AnimatePresence, type Variants } from "framer-motion"
+import { Timer, Trophy, RotateCcw, Home } from "lucide-react"
 
 const thresholds = {
   12: [
@@ -88,13 +88,18 @@ type MemoryGameProps = {
   onBackToLobby?: () => void
 }
 
-export function MemoryGame({ n = 6, seed = 0, onScore, onBackToLobby }: MemoryGameProps) {
+export function MemoryGame({
+  n = 6,
+  seed = 0,
+  onScore,
+  onBackToLobby,
+}: MemoryGameProps) {
   const baseScore = n * 10
   const maxBonus = 1000
   const targetTime = 1 * 30 * 100
   const power = 2
   const getAvailableIcons = shuffle(availableIcons, seed).slice(0, n)
-  
+
   const [arr, setArr] = useState<AvailableIcon[]>(
     shuffle(getAvailableIcons.concat(getAvailableIcons), seed)
   )
@@ -106,19 +111,15 @@ export function MemoryGame({ n = 6, seed = 0, onScore, onBackToLobby }: MemoryGa
   const [isGameComplete, setIsGameComplete] = useState(false)
   const [selected, setSelected] = useState<number[]>([])
   const [score, setScore] = useState<number | null>(0)
-  
+
   const [countdown, setCountdown] = useState<number | "GO!" | null>(null)
 
   const reveal = (idx: number) => {
-    setShow((prev) =>
-      prev.map((el, i) => (i === idx ? true : el))
-    )
+    setShow((prev) => prev.map((el, i) => (i === idx ? true : el)))
   }
 
   const hide = (idx: number) => {
-    setShow((prev) =>
-      prev.map((el, i) => (i === idx ? false : el))
-    )
+    setShow((prev) => prev.map((el, i) => (i === idx ? false : el)))
   }
 
   const select = (idx: number) => {
@@ -135,10 +136,15 @@ export function MemoryGame({ n = 6, seed = 0, onScore, onBackToLobby }: MemoryGa
     setScore(0)
     setSelected([])
     setRecord([])
-    
+
     // Reshuffle icons using randomized seed for replayability
-    const newIcons = shuffle(availableIcons, Math.floor(Math.random() * 10000)).slice(0, n)
-    setArr(shuffle(newIcons.concat(newIcons), Math.floor(Math.random() * 10000)))
+    const newIcons = shuffle(
+      availableIcons,
+      Math.floor(Math.random() * 10000)
+    ).slice(0, n)
+    setArr(
+      shuffle(newIcons.concat(newIcons), Math.floor(Math.random() * 10000))
+    )
     setShow(Array(n * 2).fill(false))
 
     // Run countdown sequence: 3... 2... 1... GO!
@@ -151,7 +157,7 @@ export function MemoryGame({ n = 6, seed = 0, onScore, onBackToLobby }: MemoryGa
     setCountdown("GO!")
     await wait(600)
     setCountdown(null)
-    
+
     // Start game timer!
     setPaused(false)
   }
@@ -216,7 +222,7 @@ export function MemoryGame({ n = 6, seed = 0, onScore, onBackToLobby }: MemoryGa
   const [counter, setCounter] = useState(0) // ms
   const startRef = useRef(0)
   const timer = (counter / 1000).toFixed(2)
-  
+
   useEffect(() => {
     if (paused) return
 
@@ -252,36 +258,44 @@ export function MemoryGame({ n = 6, seed = 0, onScore, onBackToLobby }: MemoryGa
     show: { opacity: 1, y: 0 },
   }
 
-  const countdownVariants = {
+  const countdownVariants: Variants = {
     initial: { scale: 0.3, opacity: 0 },
-    animate: { 
-      scale: [0.3, 1.25, 1], 
+    animate: {
+      scale: [0.3, 1.25, 1],
       opacity: [0, 1, 1],
-      transition: { duration: 0.65, ease: "easeOut" }
+      transition: { duration: 0.65, ease: "easeOut" },
     },
-    exit: { scale: 1.4, opacity: 0, transition: { duration: 0.25 } }
-  }
+    exit: { scale: 1.4, opacity: 0, transition: { duration: 0.25 } },
+  } as const
 
   const CONFETTI_COUNT = 32
-  const colors = ["#a855f7", "#ec4899", "#06b6d4", "#facc15", "#34d399", "#f97316"]
+  const colors = [
+    "#a855f7",
+    "#ec4899",
+    "#06b6d4",
+    "#facc15",
+    "#34d399",
+    "#f97316",
+  ]
 
   // Pre-compute stable particle data so framer-motion doesn't see different values per render
-  const particles = useMemo(() =>
-    Array.from({ length: CONFETTI_COUNT }).map((_, i) => {
-      const angle = (i / CONFETTI_COUNT) * 360
-      const radius = 130 + (i * 7) % 160
-      const dx = Math.cos((angle * Math.PI) / 180) * radius
-      const dy = Math.sin((angle * Math.PI) / 180) * radius - 80
-      const color = colors[i % colors.length]
-      const size = 6 + (i * 3) % 9
-      return { dx, dy, color, size, delay: i * 0.03 }
-    }),
-  [isGameComplete]) // eslint-disable-line react-hooks/exhaustive-deps
+  const particles = useMemo(
+    () =>
+      Array.from({ length: CONFETTI_COUNT }).map((_, i) => {
+        const angle = (i / CONFETTI_COUNT) * 360
+        const radius = 130 + ((i * 7) % 160)
+        const dx = Math.cos((angle * Math.PI) / 180) * radius
+        const dy = Math.sin((angle * Math.PI) / 180) * radius - 80
+        const color = colors[i % colors.length]
+        const size = 6 + ((i * 3) % 9)
+        return { dx, dy, color, size, delay: i * 0.03 }
+      }),
+    [isGameComplete]
+  ) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-svh flex justify-center items-center max-w-2xl m-auto px-4 py-8 relative">
       <div className="w-full relative">
-
         {/* 🎉 CELEBRATION OVERLAY */}
         <AnimatePresence>
           {isGameComplete && (
@@ -305,7 +319,11 @@ export function MemoryGame({ n = 6, seed = 0, onScore, onBackToLobby }: MemoryGa
                     scale: [1, 1.3, 0.3],
                     rotate: [0, 180 + i * 15],
                   }}
-                  transition={{ duration: 1.5, delay: p.delay, ease: "easeOut" }}
+                  transition={{
+                    duration: 1.5,
+                    delay: p.delay,
+                    ease: "easeOut",
+                  }}
                   style={{
                     position: "absolute",
                     top: "50%",
@@ -344,7 +362,10 @@ export function MemoryGame({ n = 6, seed = 0, onScore, onBackToLobby }: MemoryGa
                   variants={item}
                   className="text-2xl md:text-3xl font-extrabold tracking-wider"
                 >
-                  {getMessage(parseFloat(timer), n === 6 ? 12 : n === 8 ? 16 : 20)
+                  {getMessage(
+                    parseFloat(timer),
+                    n === 6 ? 12 : n === 8 ? 16 : 20
+                  )
                     .split("")
                     .map((char, ci) => (
                       <motion.span
@@ -360,10 +381,12 @@ export function MemoryGame({ n = 6, seed = 0, onScore, onBackToLobby }: MemoryGa
 
                 <motion.div
                   variants={item}
-                  className="text-5xl md:text-6xl font-black bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-fuchsia-400 to-cyan-400 flex items-center gap-2 select-none"
+                  className="text-5xl md:text-6xl font-black bg-clip-text text-transparent bg-linear-to-r from-yellow-300 via-fuchsia-400 to-cyan-400 flex items-center gap-2 select-none"
                 >
                   <Score value={score ?? 0} />
-                  <span className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-fuchsia-400 to-cyan-400">PTS</span>
+                  <span className="text-4xl font-bold bg-clip-text text-transparent bg-linear-to-r from-yellow-300 via-fuchsia-400 to-cyan-400">
+                    PTS
+                  </span>
                 </motion.div>
 
                 <motion.div
@@ -396,10 +419,12 @@ export function MemoryGame({ n = 6, seed = 0, onScore, onBackToLobby }: MemoryGa
               variants={countdownVariants}
               className="absolute inset-0 z-40 flex flex-col justify-center items-center bg-slate-950/60 backdrop-blur-[6px] rounded-2xl pointer-events-none"
             >
-              <motion.div 
+              <motion.div
                 className={cn(
                   "text-8xl md:text-9xl font-black tracking-widest drop-shadow-[0_0_35px_rgba(168,85,247,0.5)]",
-                  countdown === "GO!" ? "text-emerald-400 drop-shadow-[0_0_40px_rgba(52,211,153,0.6)]" : "text-violet-400"
+                  countdown === "GO!"
+                    ? "text-emerald-400 drop-shadow-[0_0_40px_rgba(52,211,153,0.6)]"
+                    : "text-violet-400"
                 )}
               >
                 {countdown}
@@ -423,11 +448,11 @@ export function MemoryGame({ n = 6, seed = 0, onScore, onBackToLobby }: MemoryGa
               <Home className="w-4 h-4" />
             </button>
           </div>
-          
+
           {/* Center wrapper */}
           <div className="flex items-center gap-3">
             {/* Timer Box (Rigid Width) */}
-            <div className="w-[115px] sm:w-[130px] h-10 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-black/20">
+            <div className="w-28.75 sm:w-32.5 h-10 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-black/20">
               <Timer className="w-4 h-4 text-cyan-400 animate-pulse shrink-0" />
               <span className="font-mono text-sm font-bold text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.15)] select-all leading-none">
                 {formatTime(parseFloat(timer))}
@@ -435,12 +460,14 @@ export function MemoryGame({ n = 6, seed = 0, onScore, onBackToLobby }: MemoryGa
             </div>
 
             {/* Score Box (Rigid Width) */}
-            <div className="w-[115px] sm:w-[130px] h-10 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-black/20">
+            <div className="w-28.75 sm:w-32.5 h-10 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-black/20">
               <Trophy className="w-4 h-4 text-violet-400 shrink-0" />
-              <span className="font-mono text-sm font-extrabold text-violet-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.15)] leading-none min-w-[32px] text-center inline-block">
+              <span className="font-mono text-sm font-extrabold text-violet-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.15)] leading-none min-w-8 text-center inline-block">
                 <Score value={score ?? 0} />
               </span>
-              <span className="text-[9px] uppercase font-black text-slate-500 shrink-0">pts</span>
+              <span className="text-[9px] uppercase font-black text-slate-500 shrink-0">
+                pts
+              </span>
             </div>
           </div>
 
@@ -463,7 +490,11 @@ export function MemoryGame({ n = 6, seed = 0, onScore, onBackToLobby }: MemoryGa
           variants={container}
           className={cn(
             "grid gap-3 w-full",
-            n === 6 ? "grid-cols-3 sm:grid-cols-4" : n === 8 ? "grid-cols-4" : "grid-cols-4 sm:grid-cols-5"
+            n === 6
+              ? "grid-cols-3 sm:grid-cols-4"
+              : n === 8
+                ? "grid-cols-4"
+                : "grid-cols-4 sm:grid-cols-5"
           )}
         >
           {arr.map((el, i) => (
@@ -485,7 +516,7 @@ export function MemoryGame({ n = 6, seed = 0, onScore, onBackToLobby }: MemoryGa
                 show={show[i] || selected.includes(i)}
                 front={
                   <div className="h-full w-full flex flex-col items-center justify-center bg-slate-900/90 border border-slate-800/80 hover:border-violet-500/40 hover:shadow-[0_0_15px_rgba(139,92,246,0.15)] rounded-xl transition-all duration-300 group cursor-pointer relative overflow-hidden">
-                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:14px_14px] opacity-20 group-hover:opacity-40 transition-opacity" />
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-size-[14px_14px] opacity-20 group-hover:opacity-40 transition-opacity" />
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-violet-600/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <span className="font-extrabold text-lg text-slate-500 group-hover:text-violet-400 group-hover:scale-110 transition-all duration-300 drop-shadow-[0_0_10px_rgba(139,92,246,0)] group-hover:drop-shadow-[0_0_12px_rgba(139,92,246,0.3)] select-none">
                       ?
@@ -506,25 +537,27 @@ export function MemoryGame({ n = 6, seed = 0, onScore, onBackToLobby }: MemoryGa
                         : ""
                     )}
                   >
-                    <div className={cn(
-                      "absolute inset-0 bg-radial-gradient from-transparent to-black/30",
-                      flash && (i === record.at(-1) || i === record.at(-2))
-                        ? arr[selected[0]] !== arr[selected[1]]
-                          ? "bg-rose-500/5"
-                          : "bg-emerald-500/5"
-                        : ""
-                    )} />
-                    
+                    <div
+                      className={cn(
+                        "absolute inset-0 bg-radial-gradient from-transparent to-black/30",
+                        flash && (i === record.at(-1) || i === record.at(-2))
+                          ? arr[selected[0]] !== arr[selected[1]]
+                            ? "bg-rose-500/5"
+                            : "bg-emerald-500/5"
+                          : ""
+                      )}
+                    />
+
                     <div className="z-10 transition-transform scale-105 duration-300">
-                      <RenderIcon 
-                        name={el} 
+                      <RenderIcon
+                        name={el}
                         color={
                           flash && (i === record.at(-1) || i === record.at(-2))
                             ? arr[selected[0]] !== arr[selected[1]]
                               ? "#f43f5e"
                               : "#10b981"
                             : "#c084fc"
-                        } 
+                        }
                       />
                     </div>
                   </div>

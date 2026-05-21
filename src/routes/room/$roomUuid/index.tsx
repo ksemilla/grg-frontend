@@ -3,7 +3,15 @@ import { MemoryGame } from "@/features/memory-game/memory-game"
 import { useRoomStore } from "@/stores/roomStore"
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
-import { Play, Trophy, Timer, Sparkles, Swords, Gauge, User } from "lucide-react"
+import {
+  Play,
+  Trophy,
+  Timer,
+  Sparkles,
+  Swords,
+  Gauge,
+  User,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -32,7 +40,7 @@ function RouteComponent() {
   const myUuid = localStorage.getItem("uuid")
   const myPlayer = roomStore.value?.players.find((p) => p.uuid === myUuid)
   const name = myPlayer?.name || ""
-  
+
   const navigate = useNavigate()
   const { sendMessage } = useMessage()
 
@@ -96,8 +104,6 @@ function RouteComponent() {
     setIsDiffModalOpen(false)
     setIsPlaying(true)
   }
-
-
 
   const handleShareChallenge = () => {
     const challengeUrl = `${window.location.origin}/room/${roomUuid}/`
@@ -180,7 +186,11 @@ function RouteComponent() {
 
         {/* The Game Board */}
         <div className="w-full max-w-4xl z-10 animate-in fade-in duration-500 flex flex-col items-center">
-          <MemoryGame onScore={onScore} onBackToLobby={onBackToLobby} n={nPairs} />
+          <MemoryGame
+            onScore={onScore}
+            onBackToLobby={onBackToLobby}
+            n={nPairs}
+          />
         </div>
       </div>
     )
@@ -229,7 +239,7 @@ function RouteComponent() {
           <div className="inline-flex p-3 bg-violet-500/10 text-violet-400 rounded-xl border border-violet-500/20 mb-2">
             <Sparkles className="w-8 h-8 animate-pulse text-violet-400" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold tracking-tight bg-linear-to-r from-violet-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
             Gridlock Game Lobby
           </h1>
           <p className="text-slate-400 text-xs px-4">
@@ -264,7 +274,7 @@ function RouteComponent() {
           {/* Start New Game (Difficulty Selection Trigger) */}
           <Dialog open={isDiffModalOpen} onOpenChange={setIsDiffModalOpen}>
             <DialogTrigger asChild>
-              <Button className="w-full h-12 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-violet-600/20 transition-all flex items-center justify-center gap-2 group text-sm cursor-pointer">
+              <Button className="w-full h-12 bg-linear-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-violet-600/20 transition-all flex items-center justify-center gap-2 group text-sm cursor-pointer">
                 <Play className="w-4 h-4 fill-white group-hover:scale-110 transition-transform" />
                 Start New Game
               </Button>
@@ -348,7 +358,10 @@ function RouteComponent() {
               <Link
                 to="/room/$roomUuid/scorers"
                 params={{ roomUuid }}
-                search={{ code: roomStore.code ?? "", token: roomStore.token ?? "" }}
+                search={{
+                  code: roomStore.code ?? "",
+                  token: roomStore.token ?? "",
+                }}
                 className="w-full"
               >
                 <Button
