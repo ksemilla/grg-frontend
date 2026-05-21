@@ -23,6 +23,7 @@ export const Route = createFileRoute("/room/$roomUuid")({
 function RouteComponent() {
   const { roomUuid } = Route.useParams()
   const roomStore = useRoomStore()
+  const myUuid = localStorage.getItem("uuid")
   const { code, token } = Route.useSearch()
   const { sendMessage } = useRoomSocket(
     roomUuid,
@@ -39,10 +40,56 @@ function RouteComponent() {
       roomStore.setCode(code)
     }
   }, [code, token])
+
+  // Sync blocked state with DB room data updates
+  useEffect(() => {
+    if (roomStore.value?.players && myUuid) {
+      const me = roomStore.value.players.find(p => p.uuid === myUuid)
+      if (me?.is_blocked) {
+        roomStore.setIsBlocked(true)
+      } else if (me && !me.is_blocked) {
+        roomStore.setIsBlocked(false)
+      }
+    }
+  }, [roomStore.value?.players, myUuid])
+
+  // Check admin status from JWT-based socket auth OR from DB player record
+  const myPlayerIsAdmin = roomStore.value?.players.find(p => p.uuid === myUuid)?.is_admin ?? false
+  const showAdminButton = roomStore.isAdmin || myPlayerIsAdmin
+
+  // If the user's uuid is blocked, show the premium blocked screen instead!
+  if (roomStore.isBlocked) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center px-4 relative overflow-hidden">
+        {/* Deep red glowing pulse effects */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-rose-600/10 rounded-full blur-3xl pointer-events-none animate-pulse duration-[4000ms]" />
+
+        <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800/80 p-8 rounded-2xl shadow-2xl relative z-10 text-center space-y-6 animate-in fade-in zoom-in duration-300">
+          <div className="inline-flex p-4 bg-rose-500/10 text-rose-500 rounded-2xl border border-rose-500/20 mb-2 animate-bounce">
+            <ShieldIcon className="w-10 h-10" />
+          </div>
+          
+          <div className="space-y-2">
+            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-rose-500 via-red-400 to-rose-600 bg-clip-text text-transparent">
+              Access Restricted
+            </h1>
+            <p className="text-slate-400 text-sm leading-relaxed px-4">
+              Your device/identifier has been restricted by the room administrator. You are prevented from joining or participating in this session.
+            </p>
+          </div>
+
+          <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-500 font-mono">
+            DEVICE UUID: {myUuid}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <div className="fixed top-4 right-4 z-30">
-        {roomStore.isAdmin && (
+        {showAdminButton && (
           <Link
             to="/room/$roomUuid/admin"
             params={{ roomUuid }}

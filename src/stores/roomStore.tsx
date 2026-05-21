@@ -6,6 +6,8 @@ type Player = {
   score: number
   time: string
   team?: string
+  is_admin?: boolean
+  is_blocked?: boolean
 }
 
 type RoomValue = {
@@ -33,6 +35,9 @@ interface RoomState {
   isAdmin?: boolean
   setIsAdmin: (isAdmin: boolean) => void
 
+  isBlocked?: boolean
+  setIsBlocked: (isBlocked: boolean) => void
+
   value?: RoomValue
   setValue: (value: RoomValue) => void
 }
@@ -45,6 +50,7 @@ export const useRoomStore = create<RoomState>()((set) => ({
   setCode: (code) => set((state) => ({ ...state, code })),
   setToken: (token) => set((state) => ({ ...state, token })),
   setIsAdmin: (isAdmin) => set((state) => ({ ...state, isAdmin })),
+  setIsBlocked: (isBlocked) => set((state) => ({ ...state, isBlocked })),
   setSomething: (data) => set((state) => ({ ...state, something: data })),
 
   setValue: (value) => set((state) => ({ ...state, value })),

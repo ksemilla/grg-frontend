@@ -23,7 +23,7 @@ function RouteComponent() {
   const roomStore = useRoomStore()
   const search = Route.useSearch()
 
-  const filtered = roomStore.value?.players.filter((pn) => pn.score) ?? []
+  const filtered = roomStore.value?.players.filter((pn) => pn.score && !pn.is_blocked) ?? []
   const sorted = [...filtered].sort((a, b) => b.score - a.score).slice(0, 5)
 
   const getRankBadge = (index: number) => {

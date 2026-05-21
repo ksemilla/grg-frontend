@@ -15,11 +15,19 @@ export function FlipCard({ show, front, back }: FlipCardProps) {
           show && "rotate-y-180"
         )}
       >
-        <div className="w-full h-full absolute backface-hidden">
+        <div 
+          className={cn(
+            "w-full h-full absolute backface-hidden transition-opacity duration-300",
+            show ? "opacity-0 pointer-events-none" : "opacity-100"
+          )}
+        >
           {front ?? <p className="text-black bg-white">front</p>}
         </div>
         <div
-          className={cn("w-full h-full absolute rotate-y-180 backface-hidden")}
+          className={cn(
+            "w-full h-full absolute rotate-y-180 backface-hidden transition-opacity duration-300",
+            show ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
         >
           {back ?? <p>back</p>}
         </div>

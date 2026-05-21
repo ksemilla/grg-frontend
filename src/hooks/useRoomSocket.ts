@@ -54,13 +54,11 @@ export function useRoomSocket(
 
       socketRef.current.onopen = () => {
         const uuid = localStorage.getItem("uuid")
-        const name = localStorage.getItem("name")
-        if (uuid && name) {
+        if (uuid) {
           socketRef.current?.send(
             JSON.stringify({
               type: "rejoin",
               uuid,
-              name,
             })
           )
         }
@@ -76,7 +74,6 @@ export function useRoomSocket(
             roomStore.setValue(event.room)
             break
           case "set.player":
-            localStorage.setItem("name", event.player_name)
             if (typeof code === "string") {
               navigate({
                 to: "/room/$roomUuid",
@@ -89,7 +86,13 @@ export function useRoomSocket(
             }
             break
           case "clear.player":
-            localStorage.removeItem("name")
+            // Deriving dynamically now; client reacts to DB deletions instantly
+            break
+          case "blocked.player":
+            roomStore.setIsBlocked(true)
+            break
+          case "name_taken.player":
+            alert("This name is already taken by another player in this lobby. Please choose a different name!")
             break
           default:
             console.log("UNKNOWN EVENT", event)

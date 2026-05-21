@@ -3,7 +3,7 @@ import { MemoryGame } from "@/features/memory-game/memory-game"
 import { useRoomStore } from "@/stores/roomStore"
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
-import { Play, Trophy, Timer, Sparkles, Swords, Gauge } from "lucide-react"
+import { Play, Trophy, Timer, Sparkles, Swords, Gauge, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -29,7 +29,10 @@ export const Route = createFileRoute("/room/$roomUuid/")({
 function RouteComponent() {
   const { roomUuid } = Route.useParams()
   const roomStore = useRoomStore()
-  const name = localStorage.getItem("name")
+  const myUuid = localStorage.getItem("uuid")
+  const myPlayer = roomStore.value?.players.find((p) => p.uuid === myUuid)
+  const name = myPlayer?.name || ""
+  
   const navigate = useNavigate()
   const { sendMessage } = useMessage()
 
@@ -57,7 +60,7 @@ function RouteComponent() {
           token: roomStore.token,
         },
       })
-    } else if (!name) {
+    } else if (roomStore.value && !myPlayer) {
       navigate({
         to: "/room/$roomUuid/set-name",
         params: {
@@ -66,9 +69,9 @@ function RouteComponent() {
         search: { code: roomStore.code },
       })
     }
-  }, [name, roomStore.code, roomUuid])
+  }, [myPlayer, roomStore.code, roomStore.value, roomUuid])
 
-  const onFinish = (data: { score: number; time: string }) => {
+  const onScore = (data: { score: number; time: string }) => {
     const { score, time } = data
 
     // Save to local storage for menu rendering
@@ -78,11 +81,12 @@ function RouteComponent() {
     sendMessage({
       type: "add_score",
       uuid: localStorage.getItem("uuid"),
-      name: localStorage.getItem("name"),
       score,
       time,
     })
+  }
 
+  const onBackToLobby = () => {
     // Return to Lobby menu
     setIsPlaying(false)
   }
@@ -93,15 +97,7 @@ function RouteComponent() {
     setIsPlaying(true)
   }
 
-  const handleReleaseSeat = () => {
-    const playerUuid = localStorage.getItem("uuid")
-    if (playerUuid) {
-      sendMessage({
-        type: "clear_player",
-        uuid: playerUuid,
-      })
-    }
-  }
+
 
   const handleShareChallenge = () => {
     const challengeUrl = `${window.location.origin}/room/${roomUuid}/`
@@ -114,9 +110,6 @@ function RouteComponent() {
   if (!roomStore.code || !name) return
 
   // Read team from DB if loaded, falling back to local storage
-  const myPlayer = roomStore.value?.players.find(
-    (p) => p.uuid === localStorage.getItem("uuid")
-  )
   const team = myPlayer?.team || localStorage.getItem("team") || ""
 
   const handleSwitchTeam = () => {
@@ -182,19 +175,12 @@ function RouteComponent() {
                 </button>
               )}
             </span>
-            <button
-              onClick={handleReleaseSeat}
-              className="text-rose-400 hover:text-rose-350 font-semibold transition-colors border-l border-slate-800/80 pl-3 flex items-center gap-1 cursor-pointer"
-              type="button"
-            >
-              Wrong Seat?
-            </button>
           </div>
         </div>
 
         {/* The Game Board */}
         <div className="w-full max-w-4xl z-10 animate-in fade-in duration-500 flex flex-col items-center">
-          <MemoryGame onFinish={onFinish} n={nPairs} />
+          <MemoryGame onScore={onScore} onBackToLobby={onBackToLobby} n={nPairs} />
         </div>
       </div>
     )
@@ -211,7 +197,16 @@ function RouteComponent() {
       <div className="absolute top-4 left-4 z-20">
         <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 px-4 py-2 rounded-xl flex items-center gap-3 text-xs shadow-lg shadow-black/30">
           <span className="text-slate-400 flex items-center gap-2">
-            Claimed Seat: <strong className={teamStyles.text}>{name}</strong>
+            Claimed Seat:{" "}
+            <Link
+              to="/room/$roomUuid/set-name"
+              params={{ roomUuid }}
+              search={{ code: roomStore.code ?? "" }}
+              className="hover:underline transition-all flex items-center gap-1 cursor-pointer"
+              title="Click to change your display name!"
+            >
+              <strong className={teamStyles.text}>{name} ✎</strong>
+            </Link>
             {team && (
               <button
                 onClick={handleSwitchTeam}
@@ -224,13 +219,6 @@ function RouteComponent() {
               </button>
             )}
           </span>
-          <button
-            onClick={handleReleaseSeat}
-            className="text-rose-400 hover:text-rose-350 font-semibold transition-colors border-l border-slate-800/80 pl-3 flex items-center gap-1 cursor-pointer"
-            type="button"
-          >
-            Wrong Seat?
-          </button>
         </div>
       </div>
 
@@ -354,32 +342,50 @@ function RouteComponent() {
             </DialogContent>
           </Dialog>
 
-          <div className="grid grid-cols-2 gap-3">
-            {/* See High Scores */}
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              {/* See High Scores */}
+              <Link
+                to="/room/$roomUuid/scorers"
+                params={{ roomUuid }}
+                search={{ code: roomStore.code ?? "", token: roomStore.token ?? "" }}
+                className="w-full"
+              >
+                <Button
+                  variant="outline"
+                  className="w-full h-10 bg-slate-950 border-slate-800 hover:bg-slate-900 hover:border-violet-500/30 text-slate-300 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                  High Scores
+                </Button>
+              </Link>
+
+              {/* Challenge Button (Share link) */}
+              <Button
+                onClick={handleShareChallenge}
+                variant="outline"
+                className="w-full h-10 bg-slate-950 border-slate-800 hover:bg-slate-900 hover:border-cyan-500/30 text-slate-300 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Swords className="w-3.5 h-3.5 text-cyan-500" />
+                Challenge Friend
+              </Button>
+            </div>
+
+            {/* Change Name Link */}
             <Link
-              to="/room/$roomUuid/scorers"
+              to="/room/$roomUuid/set-name"
               params={{ roomUuid }}
-              search={{ code: roomStore.code ?? "", token: roomStore.token ?? "" }}
-              className="w-full"
+              search={{ code: roomStore.code ?? "" }}
+              className="block w-full"
             >
               <Button
                 variant="outline"
-                className="w-full h-10 bg-slate-950 border-slate-800 hover:bg-slate-900 hover:border-violet-500/30 text-slate-300 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full h-10 bg-slate-950 border-slate-800 hover:bg-slate-900 hover:border-fuchsia-500/30 text-slate-300 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                High Scores
+                <User className="w-3.5 h-3.5 text-fuchsia-500" />
+                Change Display Name
               </Button>
             </Link>
-
-            {/* Challenge Button (Share link) */}
-            <Button
-              onClick={handleShareChallenge}
-              variant="outline"
-              className="w-full h-10 bg-slate-950 border-slate-800 hover:bg-slate-900 hover:border-cyan-500/30 text-slate-300 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <Swords className="w-3.5 h-3.5 text-cyan-500" />
-              Challenge Friend
-            </Button>
           </div>
         </div>
 
