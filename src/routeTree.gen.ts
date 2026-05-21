@@ -16,7 +16,9 @@ import { Route as RoomRoomUuidIndexRouteImport } from './routes/room/$roomUuid/i
 import { Route as RoomRoomUuidSetNameRouteImport } from './routes/room/$roomUuid/set-name'
 import { Route as RoomRoomUuidScorersRouteImport } from './routes/room/$roomUuid/scorers'
 import { Route as RoomRoomUuidEnterRouteImport } from './routes/room/$roomUuid/enter'
+import { Route as RoomRoomUuidBattlesIndexRouteImport } from './routes/room/$roomUuid/battles/index'
 import { Route as RoomRoomUuidAdminIndexRouteImport } from './routes/room/$roomUuid/admin/index'
+import { Route as RoomRoomUuidBattlesBattleIdRouteImport } from './routes/room/$roomUuid/battles/$battleId'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
@@ -53,11 +55,23 @@ const RoomRoomUuidEnterRoute = RoomRoomUuidEnterRouteImport.update({
   path: '/enter',
   getParentRoute: () => RoomRoomUuidRouteRoute,
 } as any)
+const RoomRoomUuidBattlesIndexRoute =
+  RoomRoomUuidBattlesIndexRouteImport.update({
+    id: '/battles/',
+    path: '/battles/',
+    getParentRoute: () => RoomRoomUuidRouteRoute,
+  } as any)
 const RoomRoomUuidAdminIndexRoute = RoomRoomUuidAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
   getParentRoute: () => RoomRoomUuidRouteRoute,
 } as any)
+const RoomRoomUuidBattlesBattleIdRoute =
+  RoomRoomUuidBattlesBattleIdRouteImport.update({
+    id: '/battles/$battleId',
+    path: '/battles/$battleId',
+    getParentRoute: () => RoomRoomUuidRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -67,7 +81,9 @@ export interface FileRoutesByFullPath {
   '/room/$roomUuid/scorers': typeof RoomRoomUuidScorersRoute
   '/room/$roomUuid/set-name': typeof RoomRoomUuidSetNameRoute
   '/room/$roomUuid/': typeof RoomRoomUuidIndexRoute
+  '/room/$roomUuid/battles/$battleId': typeof RoomRoomUuidBattlesBattleIdRoute
   '/room/$roomUuid/admin': typeof RoomRoomUuidAdminIndexRoute
+  '/room/$roomUuid/battles': typeof RoomRoomUuidBattlesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -76,7 +92,9 @@ export interface FileRoutesByTo {
   '/room/$roomUuid/scorers': typeof RoomRoomUuidScorersRoute
   '/room/$roomUuid/set-name': typeof RoomRoomUuidSetNameRoute
   '/room/$roomUuid': typeof RoomRoomUuidIndexRoute
+  '/room/$roomUuid/battles/$battleId': typeof RoomRoomUuidBattlesBattleIdRoute
   '/room/$roomUuid/admin': typeof RoomRoomUuidAdminIndexRoute
+  '/room/$roomUuid/battles': typeof RoomRoomUuidBattlesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -87,7 +105,9 @@ export interface FileRoutesById {
   '/room/$roomUuid/scorers': typeof RoomRoomUuidScorersRoute
   '/room/$roomUuid/set-name': typeof RoomRoomUuidSetNameRoute
   '/room/$roomUuid/': typeof RoomRoomUuidIndexRoute
+  '/room/$roomUuid/battles/$battleId': typeof RoomRoomUuidBattlesBattleIdRoute
   '/room/$roomUuid/admin/': typeof RoomRoomUuidAdminIndexRoute
+  '/room/$roomUuid/battles/': typeof RoomRoomUuidBattlesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -99,7 +119,9 @@ export interface FileRouteTypes {
     | '/room/$roomUuid/scorers'
     | '/room/$roomUuid/set-name'
     | '/room/$roomUuid/'
+    | '/room/$roomUuid/battles/$battleId'
     | '/room/$roomUuid/admin'
+    | '/room/$roomUuid/battles'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -108,7 +130,9 @@ export interface FileRouteTypes {
     | '/room/$roomUuid/scorers'
     | '/room/$roomUuid/set-name'
     | '/room/$roomUuid'
+    | '/room/$roomUuid/battles/$battleId'
     | '/room/$roomUuid/admin'
+    | '/room/$roomUuid/battles'
   id:
     | '__root__'
     | '/'
@@ -118,7 +142,9 @@ export interface FileRouteTypes {
     | '/room/$roomUuid/scorers'
     | '/room/$roomUuid/set-name'
     | '/room/$roomUuid/'
+    | '/room/$roomUuid/battles/$battleId'
     | '/room/$roomUuid/admin/'
+    | '/room/$roomUuid/battles/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -178,11 +204,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RoomRoomUuidEnterRouteImport
       parentRoute: typeof RoomRoomUuidRouteRoute
     }
+    '/room/$roomUuid/battles/': {
+      id: '/room/$roomUuid/battles/'
+      path: '/battles'
+      fullPath: '/room/$roomUuid/battles'
+      preLoaderRoute: typeof RoomRoomUuidBattlesIndexRouteImport
+      parentRoute: typeof RoomRoomUuidRouteRoute
+    }
     '/room/$roomUuid/admin/': {
       id: '/room/$roomUuid/admin/'
       path: '/admin'
       fullPath: '/room/$roomUuid/admin'
       preLoaderRoute: typeof RoomRoomUuidAdminIndexRouteImport
+      parentRoute: typeof RoomRoomUuidRouteRoute
+    }
+    '/room/$roomUuid/battles/$battleId': {
+      id: '/room/$roomUuid/battles/$battleId'
+      path: '/battles/$battleId'
+      fullPath: '/room/$roomUuid/battles/$battleId'
+      preLoaderRoute: typeof RoomRoomUuidBattlesBattleIdRouteImport
       parentRoute: typeof RoomRoomUuidRouteRoute
     }
   }
@@ -193,7 +233,9 @@ interface RoomRoomUuidRouteRouteChildren {
   RoomRoomUuidScorersRoute: typeof RoomRoomUuidScorersRoute
   RoomRoomUuidSetNameRoute: typeof RoomRoomUuidSetNameRoute
   RoomRoomUuidIndexRoute: typeof RoomRoomUuidIndexRoute
+  RoomRoomUuidBattlesBattleIdRoute: typeof RoomRoomUuidBattlesBattleIdRoute
   RoomRoomUuidAdminIndexRoute: typeof RoomRoomUuidAdminIndexRoute
+  RoomRoomUuidBattlesIndexRoute: typeof RoomRoomUuidBattlesIndexRoute
 }
 
 const RoomRoomUuidRouteRouteChildren: RoomRoomUuidRouteRouteChildren = {
@@ -201,7 +243,9 @@ const RoomRoomUuidRouteRouteChildren: RoomRoomUuidRouteRouteChildren = {
   RoomRoomUuidScorersRoute: RoomRoomUuidScorersRoute,
   RoomRoomUuidSetNameRoute: RoomRoomUuidSetNameRoute,
   RoomRoomUuidIndexRoute: RoomRoomUuidIndexRoute,
+  RoomRoomUuidBattlesBattleIdRoute: RoomRoomUuidBattlesBattleIdRoute,
   RoomRoomUuidAdminIndexRoute: RoomRoomUuidAdminIndexRoute,
+  RoomRoomUuidBattlesIndexRoute: RoomRoomUuidBattlesIndexRoute,
 }
 
 const RoomRoomUuidRouteRouteWithChildren =

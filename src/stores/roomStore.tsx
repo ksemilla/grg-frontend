@@ -14,6 +14,9 @@ type RoomValue = {
   player_names: string[]
   players: Player[]
   is_admin: boolean
+  data?: {
+    battles?: any[]
+  }
 }
 
 interface RoomState {

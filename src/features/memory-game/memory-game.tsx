@@ -86,6 +86,7 @@ type MemoryGameProps = {
   seed?: number
   onScore?: (data: { score: number; time: string }) => void
   onBackToLobby?: () => void
+  onBattleStateUpdate?: (data: { score: number; timer: string; show: boolean[]; finished: boolean }) => void
 }
 
 export function MemoryGame({
@@ -93,15 +94,18 @@ export function MemoryGame({
   seed = 0,
   onScore,
   onBackToLobby,
+  onBattleStateUpdate,
 }: MemoryGameProps) {
   const baseScore = n * 10
   const maxBonus = 1000
   const targetTime = 1 * 30 * 100
   const power = 2
-  const getAvailableIcons = shuffle(availableIcons, seed).slice(0, n)
+
+  const initialSeed = seed !== 0 ? seed : 1234
+  const getAvailableIcons = shuffle(availableIcons, initialSeed).slice(0, n)
 
   const [arr, setArr] = useState<AvailableIcon[]>(
-    shuffle(getAvailableIcons.concat(getAvailableIcons), seed)
+    shuffle(getAvailableIcons.concat(getAvailableIcons), initialSeed)
   )
   const [record, setRecord] = useState<number[]>([])
   const [show, setShow] = useState<boolean[]>(Array(n * 2).fill(false))
@@ -135,13 +139,10 @@ export function MemoryGame({
     setSelected([])
     setRecord([])
 
-    // Reshuffle icons using randomized seed for replayability
-    const newIcons = shuffle(
-      availableIcons,
-      Math.floor(Math.random() * 10000)
-    ).slice(0, n)
+    const effectiveSeed = seed !== 0 ? seed : Math.floor(Math.random() * 10000)
+    const newIcons = shuffle(availableIcons, effectiveSeed).slice(0, n)
     setArr(
-      shuffle(newIcons.concat(newIcons), Math.floor(Math.random() * 10000))
+      shuffle(newIcons.concat(newIcons), effectiveSeed)
     )
     setShow(Array(n * 2).fill(false))
 
@@ -194,23 +195,32 @@ export function MemoryGame({
 
         setSelected([])
       }
-      if (show.length > 0 && show.every((el) => el)) {
-        setPaused(true)
-        // Brief pause for matched-cards animation to settle
-        await wait(800)
-        setIsGameComplete(true)
-        // Submit score, show celebration for 3s, then go to lobby
-        onScore?.({
-          score: score ?? 0,
-          time: timer,
-        })
-        await wait(3200)
-        onBackToLobby?.()
-      }
     }
 
     runSequence()
   }, [selected])
+
+  // 🎉 Dedicated Game Completion Trigger
+  useEffect(() => {
+    if (show.length > 0 && show.every((el) => el) && !isGameComplete) {
+      const handleGameComplete = async () => {
+        setPaused(true)
+        // Brief pause for matched-cards animation to settle
+        await wait(100)
+        setIsGameComplete(true)
+        
+        onScore?.({
+          score: score ?? 0,
+          time: timer,
+        })
+        
+        await wait(800)
+        onBackToLobby?.()
+      }
+      handleGameComplete()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show, isGameComplete])
 
   const restart = () => {
     startWithCountdown()
@@ -234,6 +244,18 @@ export function MemoryGame({
     rafId = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafId)
   }, [paused])
+
+  useEffect(() => {
+    if (onBattleStateUpdate) {
+      onBattleStateUpdate({
+        score: score || 0,
+        timer,
+        show,
+        finished: isGameComplete,
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [score, show, isGameComplete])
 
   const [flash, setFlash] = useState(false)
 

@@ -95,10 +95,11 @@ export function useRoomSocket(
             roomStore.setIsBlocked(true)
             break
           case "name_taken.player":
-            alert("This name is already taken by another player in this lobby. Please choose a different name!")
+            alert(
+              "This name is already taken by another player in this lobby. Please choose a different name!"
+            )
             break
           default:
-            console.log("UNKNOWN EVENT", event)
             break
         }
       }
@@ -130,7 +131,10 @@ export function useRoomSocket(
 
   const reconnect = () => {
     retryRef.current = 0
-    if (socketRef.current && socketRef.current.readyState !== WebSocket.CLOSED) {
+    if (
+      socketRef.current &&
+      socketRef.current.readyState !== WebSocket.CLOSED
+    ) {
       socketRef.current.close()
     }
     connectFnRef.current?.()

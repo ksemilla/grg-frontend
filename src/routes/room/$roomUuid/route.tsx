@@ -1,9 +1,16 @@
 import { MessageProvider } from "@/components/message-provider"
 import { useRoomSocket } from "@/hooks/useRoomSocket"
 import { useRoomStore } from "@/stores/roomStore"
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router"
-import { ShieldIcon, RefreshCw } from "lucide-react"
+import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router"
+import { ShieldIcon, RefreshCw, Swords } from "lucide-react"
 import { useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 type RoomSearchParams = {
   code?: string
@@ -27,9 +34,32 @@ function RouteComponent() {
   const { code, token } = Route.useSearch()
   const { sendMessage, reconnect } = useRoomSocket(
     roomUuid,
-    roomStore.code,
-    roomStore.token
+    code,
+    token
   )
+  const navigate = useNavigate()
+
+  const arena = (roomStore.value?.data as any)?.arena as any
+  const isPlayer1 = arena?.player1?.uuid === myUuid
+  const isPlayer2 = arena?.player2?.uuid === myUuid
+  const mySlot = isPlayer1 ? "player1" : isPlayer2 ? "player2" : null
+  const pendingIncomingInvite = mySlot && arena?.[mySlot]?.invite_status === "invited"
+  
+  const activeArena = arena?.status === "active" && (arena.player1.uuid === myUuid || arena.player2.uuid === myUuid)
+
+  useEffect(() => {
+    if (activeArena) {
+      const currentPath = window.location.pathname
+      const lobbyPath = `/room/${roomUuid}`
+      if (currentPath !== lobbyPath && currentPath !== `${lobbyPath}/`) {
+        navigate({
+          to: "/room/$roomUuid",
+          params: { roomUuid },
+          search: { code: roomStore.code ?? "", token: roomStore.token ?? "" },
+        })
+      }
+    }
+  }, [activeArena, navigate, roomUuid, roomStore.code, roomStore.token])
 
   useEffect(() => {
     if (token) {
@@ -148,6 +178,49 @@ function RouteComponent() {
       </div>
       <MessageProvider sendMessage={sendMessage}>
         <Outlet />
+
+        {/* ⚔️ GLOBAL 1V1 ARENA INVITE DIALOG */}
+        <Dialog open={!!pendingIncomingInvite} onOpenChange={() => {}}>
+          <DialogContent className="bg-slate-900 border border-slate-800 text-slate-100 max-w-sm rounded-2xl shadow-2xl p-6 text-center space-y-4">
+            <div className="inline-flex p-3.5 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20 mb-1 animate-bounce">
+              <Swords className="w-6 h-6 text-rose-400" />
+            </div>
+            <DialogTitle className="text-lg font-bold">
+              1v1 Arena Callout!
+            </DialogTitle>
+            <DialogDescription className="text-slate-400 text-xs px-4">
+              The room administrator has invited you to enter the spotlight and battle in the **1v1 Arena**!
+            </DialogDescription>
+            <div className="bg-slate-950/60 border border-slate-850 p-2.5 rounded-lg text-xs font-mono font-bold text-rose-400 uppercase tracking-widest">
+              Difficulty: {arena?.difficulty || "normal"}
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                onClick={() => {
+                  sendMessage({
+                    type: "accept_arena_invite",
+                    uuid: myUuid,
+                  })
+                }}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-10 rounded-xl transition-all cursor-pointer text-xs"
+              >
+                Accept ⚔️
+              </Button>
+              <Button
+                onClick={() => {
+                  sendMessage({
+                    type: "decline_arena_invite",
+                    uuid: myUuid,
+                  })
+                }}
+                variant="outline"
+                className="flex-1 bg-slate-950 border-slate-800 hover:bg-slate-900 text-slate-400 hover:text-white h-10 rounded-xl transition-all cursor-pointer text-xs"
+              >
+                Decline 🏳️
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </MessageProvider>
     </>
   )
