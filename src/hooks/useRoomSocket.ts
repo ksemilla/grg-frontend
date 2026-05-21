@@ -68,6 +68,20 @@ export function useRoomSocket(
         }
       }
 
+      if (socketRef.current.readyState === WebSocket.OPEN) {
+        roomStore.setSocketStatus("connected")
+        retryRef.current = 0
+        const uuid = localStorage.getItem("uuid")
+        if (uuid) {
+          socketRef.current.send(
+            JSON.stringify({
+              type: "rejoin",
+              uuid,
+            })
+          )
+        }
+      }
+
       socketRef.current.onmessage = (e: MessageEvent) => {
         const event = JSON.parse(e.data)
         switch (event.type) {
@@ -77,21 +91,35 @@ export function useRoomSocket(
           case "room.update":
             roomStore.setValue(event.room)
             break
-          case "set.player":
-            if (typeof code === "string") {
-              navigate({
-                to: "/room/$roomUuid",
-                params: { roomUuid },
-                search: {
-                  code: code,
-                  token,
-                },
-              })
-            }
+          case "set.player": {
+            const finalCode = (typeof code === "string" ? code : null) || roomStore.code || ""
+            navigate({
+              to: "/room/$roomUuid",
+              params: { roomUuid },
+              search: {
+                code: finalCode,
+                token: token || roomStore.token || "",
+              },
+            })
             break
-          case "clear.player":
+          }
+          case "clear.player": {
+            localStorage.removeItem("name")
+            localStorage.removeItem("team")
+            const finalCode = (typeof code === "string" ? code : null) || roomStore.code || ""
+            navigate({
+              to: "/room/$roomUuid/set-name",
+              params: { roomUuid },
+              search: {
+                code: finalCode,
+                token: token || roomStore.token || "",
+              },
+            })
             break
+          }
           case "blocked.player":
+            localStorage.removeItem("name")
+            localStorage.removeItem("team")
             roomStore.setIsBlocked(true)
             break
           case "name_taken.player":

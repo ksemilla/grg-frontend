@@ -23,23 +23,39 @@ function RouteComponent() {
   const roomStore = useRoomStore()
   const search = Route.useSearch()
 
-  const filtered = roomStore.value?.players.filter((pn) => pn.score && !pn.is_blocked) ?? []
+  const filtered =
+    roomStore.value?.players.filter((pn) => pn.score && !pn.is_blocked) ?? []
   const sorted = [...filtered].sort((a, b) => b.score - a.score).slice(0, 5)
 
-  const boyTotal = filtered.filter(p => p.team === "boy").reduce((sum, p) => sum + p.score, 0)
-  const girlTotal = filtered.filter(p => p.team === "girl").reduce((sum, p) => sum + p.score, 0)
-  const leading = boyTotal > girlTotal ? "boy" : girlTotal > boyTotal ? "girl" : "tie"
+  const boyTotal = filtered
+    .filter((p) => p.team === "boy")
+    .reduce((sum, p) => sum + p.score, 0)
+  const girlTotal = filtered
+    .filter((p) => p.team === "girl")
+    .reduce((sum, p) => sum + p.score, 0)
+  const leading =
+    boyTotal > girlTotal ? "boy" : girlTotal > boyTotal ? "girl" : "tie"
 
   const getRankBadge = (index: number) => {
     switch (index) {
       case 0:
-        return <Trophy className="w-6 h-6 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+        return (
+          <Trophy className="w-6 h-6 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+        )
       case 1:
-        return <Medal className="w-6 h-6 text-slate-300 drop-shadow-[0_0_8px_rgba(203,213,225,0.4)]" />
+        return (
+          <Medal className="w-6 h-6 text-slate-300 drop-shadow-[0_0_8px_rgba(203,213,225,0.4)]" />
+        )
       case 2:
-        return <Award className="w-6 h-6 text-amber-600 drop-shadow-[0_0_8px_rgba(217,119,6,0.4)]" />
+        return (
+          <Award className="w-6 h-6 text-amber-600 drop-shadow-[0_0_8px_rgba(217,119,6,0.4)]" />
+        )
       default:
-        return <span className="font-mono font-bold text-slate-500 w-6 text-center text-sm">#{index + 1}</span>
+        return (
+          <span className="font-mono font-bold text-slate-500 w-6 text-center text-sm">
+            #{index + 1}
+          </span>
+        )
     }
   }
 
@@ -77,7 +93,6 @@ function RouteComponent() {
 
       {/* Leaderboard Card */}
       <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10 space-y-6 animate-in fade-in zoom-in duration-300">
-        
         {/* Header Block */}
         <div className="text-center space-y-2">
           <div className="inline-flex p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20 mb-2">
@@ -95,33 +110,49 @@ function RouteComponent() {
         {(boyTotal > 0 || girlTotal > 0) && (
           <div className="grid grid-cols-2 gap-3">
             {/* Team Boy */}
-            <div className={`relative flex flex-col items-center gap-1 p-4 rounded-xl border transition-all ${
-              leading === "boy"
-                ? "border-sky-500/50 bg-sky-500/10 shadow-[0_0_20px_rgba(14,165,233,0.1)]"
-                : "border-slate-800 bg-slate-950/30"
-            }`}>
+            <div
+              className={`relative flex flex-col items-center gap-1 p-4 rounded-xl border transition-all ${
+                leading === "boy"
+                  ? "border-sky-500/50 bg-sky-500/10 shadow-[0_0_20px_rgba(14,165,233,0.1)]"
+                  : "border-slate-800 bg-slate-950/30"
+              }`}
+            >
               {leading === "boy" && (
                 <span className="absolute -top-2.5 text-base">👑</span>
               )}
               <span className="text-2xl">👦</span>
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-sky-400">Team Boy</span>
-              <span className="font-black text-xl text-sky-300 font-mono">{boyTotal.toLocaleString()}</span>
-              <span className="text-[9px] text-slate-500 uppercase tracking-wider">total pts</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-sky-400">
+                Team Boy
+              </span>
+              <span className="font-black text-xl text-sky-300 font-mono">
+                {boyTotal.toLocaleString()}
+              </span>
+              <span className="text-[9px] text-slate-500 uppercase tracking-wider">
+                total pts
+              </span>
             </div>
 
             {/* Team Girl */}
-            <div className={`relative flex flex-col items-center gap-1 p-4 rounded-xl border transition-all ${
-              leading === "girl"
-                ? "border-pink-500/50 bg-pink-500/10 shadow-[0_0_20px_rgba(236,72,153,0.1)]"
-                : "border-slate-800 bg-slate-950/30"
-            }`}>
+            <div
+              className={`relative flex flex-col items-center gap-1 p-4 rounded-xl border transition-all ${
+                leading === "girl"
+                  ? "border-pink-500/50 bg-pink-500/10 shadow-[0_0_20px_rgba(236,72,153,0.1)]"
+                  : "border-slate-800 bg-slate-950/30"
+              }`}
+            >
               {leading === "girl" && (
                 <span className="absolute -top-2.5 text-base">👑</span>
               )}
               <span className="text-2xl">👧</span>
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-pink-400">Team Girl</span>
-              <span className="font-black text-xl text-pink-300 font-mono">{girlTotal.toLocaleString()}</span>
-              <span className="text-[9px] text-slate-500 uppercase tracking-wider">total pts</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-pink-400">
+                Team Girl
+              </span>
+              <span className="font-black text-xl text-pink-300 font-mono">
+                {girlTotal.toLocaleString()}
+              </span>
+              <span className="text-[9px] text-slate-500 uppercase tracking-wider">
+                total pts
+              </span>
             </div>
           </div>
         )}
@@ -149,19 +180,23 @@ function RouteComponent() {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="text-right">
                   <span className="font-extrabold text-slate-100 text-lg tracking-tight font-mono">
                     {pn.score}
                   </span>
-                  <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider ml-1">pts</span>
+                  <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider ml-1">
+                    pts
+                  </span>
                 </div>
               </motion.div>
             ))
           ) : (
             <div className="text-center py-10 bg-slate-950/20 rounded-xl border border-dashed border-slate-800 space-y-2">
               <Award className="w-8 h-8 text-slate-700 mx-auto" />
-              <p className="text-xs text-slate-500 font-medium">No scores submitted yet in this room</p>
+              <p className="text-xs text-slate-500 font-medium">
+                No scores submitted yet in this room
+              </p>
             </div>
           )}
         </div>

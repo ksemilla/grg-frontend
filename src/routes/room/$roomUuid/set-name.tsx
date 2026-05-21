@@ -7,7 +7,7 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useMessage } from "@/components/message-provider"
@@ -25,27 +25,35 @@ function RouteComponent() {
   const hasExistingName = !!myPlayer?.name
   const [name, setName] = useState("")
   const { sendMessage } = useMessage()
+  const navigate = useNavigate()
 
   const setPlayer = (player_name: string, team: "boy" | "girl") => {
     if (uuid) {
       localStorage.setItem("team", team)
+      localStorage.setItem("name", player_name) // Instantly store name to prevent race conditions
       sendMessage({
         type: "set_player",
         uuid,
         player_name,
         team,
       })
+      // Immediately navigate back to lobby
+      navigate({
+        to: "/room/$roomUuid",
+        params: { roomUuid },
+        search: { code: roomStore.code ?? "" }
+      })
     }
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-start sm:justify-center items-center pt-12 sm:pt-0 px-4 relative overflow-hidden">
       {/* Background glowing effects */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Main Card */}
-      <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10 space-y-6 animate-in fade-in zoom-in duration-300">
+      <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-6 sm:p-8 rounded-2xl shadow-2xl relative z-10 space-y-6 animate-in fade-in zoom-in duration-300">
         {/* Header Block */}
         <div className="text-center space-y-2">
           <div className="inline-flex p-3 bg-violet-500/10 text-violet-400 rounded-xl border border-violet-500/20 mb-2">
@@ -105,7 +113,7 @@ function RouteComponent() {
                   >
                     <span className="text-3xl">👦</span>
                     <span className="tracking-wide text-sm font-extrabold uppercase">
-                      Team Boy
+                      Team Mateus
                     </span>
                   </Button>
 
@@ -116,7 +124,7 @@ function RouteComponent() {
                   >
                     <span className="text-3xl">👧</span>
                     <span className="tracking-wide text-sm font-extrabold uppercase">
-                      Team Girl
+                      Team Meira
                     </span>
                   </Button>
                 </div>

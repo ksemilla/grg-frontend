@@ -9,31 +9,31 @@ import { Timer, Trophy, RotateCcw, Home } from "lucide-react"
 
 const thresholds = {
   12: [
-    { max: 20, options: ["Memory Legend 🧠💎", "Flash Mind ⚡"] }, // insanely fast
-    { max: 25, options: ["Memory Master 🧠", "Perfect Run!"] },
-    { max: 30, options: ["Sharp Mind ✨", "Quick Thinker!"] }, // best
-    { max: 35, options: ["Getting Warmer 🔥", "Nice Memory!"] },
-    { max: 45, options: ["Keep Practicing 🧩", "Good Effort!"] },
-    { max: 55, options: ["Not Bad 👍", "Memory Learner"] },
-    { max: Infinity, options: ["Don’t Give Up 😅", "Practice Makes Perfect!"] },
+    { max: 20, options: ["Memory Legend", "Flash Mind ⚡"] }, // insanely fast
+    { max: 25, options: ["Memory Master", "Perfect Run!"] },
+    { max: 30, options: ["Sharp Mind", "Quick Thinker!"] }, // best
+    { max: 35, options: ["Getting Warmer", "Nice Memory!"] },
+    { max: 45, options: ["Keep Practicing", "Good Effort!"] },
+    { max: 55, options: ["Not Bad", "Memory Learner"] },
+    { max: Infinity, options: ["Don’t Give Up", "Practice Makes Perfect!"] },
   ],
   16: [
-    { max: 25, options: ["Memory Legend 🧠💎", "Flash Mind ⚡"] },
-    { max: 30, options: ["Memory Master 🧠", "Perfect Run!"] },
-    { max: 35, options: ["Sharp Mind ✨", "Quick Thinker!"] }, // best
-    { max: 40, options: ["Getting Warmer 🔥", "Nice Memory!"] },
-    { max: 50, options: ["Keep Practicing 🧩", "Good Effort!"] },
-    { max: 60, options: ["Not Bad 👍", "Memory Learner"] },
-    { max: Infinity, options: ["Don’t Give Up 😅", "Practice Makes Perfect!"] },
+    { max: 25, options: ["Memory Legend", "Flash Mind ⚡"] },
+    { max: 30, options: ["Memory Master", "Perfect Run!"] },
+    { max: 35, options: ["Sharp Mind", "Quick Thinker!"] }, // best
+    { max: 40, options: ["Getting Warmer", "Nice Memory!"] },
+    { max: 50, options: ["Keep Practicing", "Good Effort!"] },
+    { max: 60, options: ["Not Bad", "Memory Learner"] },
+    { max: Infinity, options: ["Don’t Give Up", "Practice Makes Perfect!"] },
   ],
   20: [
-    { max: 40, options: ["Memory Legend 🧠💎", "Flash Mind ⚡"] },
-    { max: 50, options: ["Memory Master 🧠", "Perfect Run!"] },
-    { max: 60, options: ["Sharp Mind ✨", "Quick Thinker!"] }, // best
-    { max: 70, options: ["Getting Warmer 🔥", "Nice Memory!"] },
-    { max: 80, options: ["Keep Practicing 🧩", "Good Effort!"] },
-    { max: 90, options: ["Not Bad 👍", "Memory Learner"] },
-    { max: Infinity, options: ["Don’t Give Up 😅", "Practice Makes Perfect!"] },
+    { max: 40, options: ["Memory Legend", "Flash Mind ⚡"] },
+    { max: 50, options: ["Memory Master ", "Perfect Run!"] },
+    { max: 60, options: ["Sharp Mind", "Quick Thinker!"] }, // best
+    { max: 70, options: ["Getting Warmer", "Nice Memory!"] },
+    { max: 80, options: ["Keep Practicing", "Good Effort!"] },
+    { max: 90, options: ["Not Bad", "Memory Learner"] },
+    { max: Infinity, options: ["Don’t Give Up", "Practice Makes Perfect!"] },
   ],
 } as const
 
@@ -86,7 +86,12 @@ type MemoryGameProps = {
   seed?: number
   onScore?: (data: { score: number; time: string }) => void
   onBackToLobby?: () => void
-  onBattleStateUpdate?: (data: { score: number; timer: string; show: boolean[]; finished: boolean }) => void
+  onBattleStateUpdate?: (data: {
+    score: number
+    timer: string
+    show: boolean[]
+    finished: boolean
+  }) => void
 }
 
 export function MemoryGame({
@@ -141,9 +146,7 @@ export function MemoryGame({
 
     const effectiveSeed = seed !== 0 ? seed : Math.floor(Math.random() * 10000)
     const newIcons = shuffle(availableIcons, effectiveSeed).slice(0, n)
-    setArr(
-      shuffle(newIcons.concat(newIcons), effectiveSeed)
-    )
+    setArr(shuffle(newIcons.concat(newIcons), effectiveSeed))
     setShow(Array(n * 2).fill(false))
 
     // Run countdown sequence: 3... 2... 1... GO!
@@ -208,13 +211,13 @@ export function MemoryGame({
         // Brief pause for matched-cards animation to settle
         await wait(100)
         setIsGameComplete(true)
-        
+
         onScore?.({
           score: score ?? 0,
           time: timer,
         })
-        
-        await wait(800)
+
+        await wait(3000)
         onBackToLobby?.()
       }
       handleGameComplete()
@@ -313,7 +316,7 @@ export function MemoryGame({
   ) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="min-h-svh flex justify-center items-center max-w-2xl m-auto px-4 py-8 relative">
+    <div className="w-full flex flex-col justify-center items-center max-w-2xl m-auto py-2 relative">
       <div className="w-full relative">
         {/* 🎉 CELEBRATION OVERLAY */}
         <AnimatePresence>
@@ -456,48 +459,48 @@ export function MemoryGame({
         </AnimatePresence>
 
         {/* HUD DIGITAL DASHBOARD */}
-        <div className="w-full flex items-center justify-between px-4 py-3 mb-6 bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl shadow-lg select-none">
+        <div className="w-full flex items-center justify-between px-2.5 py-2.5 sm:px-4 sm:py-3 mb-4 sm:mb-6 bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl shadow-lg select-none">
           {/* Left wrapper */}
-          <div className="w-12 flex justify-start">
+          <div className="w-10 sm:w-12 flex justify-start">
             <button
               onClick={() => onBackToLobby?.()}
-              className="p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:bg-slate-800 hover:border-slate-700 hover:text-slate-200 transition-all text-slate-400 cursor-pointer"
+              className="p-2 sm:p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:bg-slate-800 hover:border-slate-700 hover:text-slate-200 transition-all text-slate-400 cursor-pointer"
               title="Quit to Lobby"
             >
-              <Home className="w-4 h-4" />
+              <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
 
           {/* Center wrapper */}
-          <div className="flex items-center gap-3">
-            {/* Timer Box (Rigid Width) */}
-            <div className="w-28.75 sm:w-32.5 h-10 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-black/20">
-              <Timer className="w-4 h-4 text-cyan-400 animate-pulse shrink-0" />
-              <span className="font-mono text-sm font-bold text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.15)] select-all leading-none">
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            {/* Timer Box */}
+            <div className="w-24 sm:w-32 h-9 sm:h-10 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-center gap-1 sm:gap-2 shadow-lg shadow-black/20">
+              <Timer className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 animate-pulse shrink-0" />
+              <span className="font-mono text-xs sm:text-sm font-bold text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.15)] select-all leading-none">
                 {formatTime(parseFloat(timer))}
               </span>
             </div>
 
-            {/* Score Box (Rigid Width) */}
-            <div className="w-28.75 sm:w-32.5 h-10 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-black/20">
-              <Trophy className="w-4 h-4 text-violet-400 shrink-0" />
-              <span className="font-mono text-sm font-extrabold text-violet-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.15)] leading-none min-w-8 text-center inline-block">
+            {/* Score Box */}
+            <div className="w-24 sm:w-32 h-9 sm:h-10 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-center gap-1 sm:gap-2 shadow-lg shadow-black/20">
+              <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-violet-400 shrink-0" />
+              <span className="font-mono text-xs sm:text-sm font-extrabold text-violet-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.15)] leading-none min-w-6 sm:min-w-8 text-center inline-block">
                 <Score value={score ?? 0} />
               </span>
-              <span className="text-[9px] uppercase font-black text-slate-500 shrink-0">
+              <span className="text-[8px] sm:text-[9px] uppercase font-black text-slate-500 shrink-0">
                 pts
               </span>
             </div>
           </div>
 
           {/* Right wrapper */}
-          <div className="w-12 flex justify-end">
+          <div className="w-10 sm:w-12 flex justify-end">
             <button
               onClick={() => restart()}
-              className="p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:bg-slate-800 hover:border-violet-500/30 hover:text-violet-400 transition-all text-slate-400 cursor-pointer"
+              className="p-2 sm:p-2.5 bg-slate-900/80 border border-slate-800 rounded-xl hover:bg-slate-800 hover:border-violet-500/30 hover:text-violet-400 transition-all text-slate-400 cursor-pointer"
               title="Restart Match"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
         </div>
@@ -521,7 +524,9 @@ export function MemoryGame({
               variants={item}
               key={i}
               className={cn(
-                "h-24 sm:h-28",
+                n === 10
+                  ? "h-16 sm:h-24 lg:h-28" // More compact for 20-card grid
+                  : "h-20 sm:h-24 lg:h-28",
                 show[i] || selected.length === 2 || paused || countdown !== null
                   ? "pointer-events-none opacity-90"
                   : "hover:scale-[1.02] transition-transform duration-300"

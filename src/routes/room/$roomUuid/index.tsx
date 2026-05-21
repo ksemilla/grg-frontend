@@ -83,6 +83,19 @@ function RouteComponent() {
     setPrevTime(localStorage.getItem("prev_time"))
   }, [isPlaying])
 
+  // Automatically vacate seat and return to lobby 6 seconds after match finishes
+  useEffect(() => {
+    if (completedBattle) {
+      const timerId = setTimeout(() => {
+        sendMessage({
+          type: "decline_arena_invite",
+          uuid: myUuid,
+        })
+      }, 6000)
+      return () => clearTimeout(timerId)
+    }
+  }, [completedBattle, sendMessage, myUuid])
+
   useEffect(() => {
     if (!roomStore.code) {
       navigate({
@@ -92,7 +105,7 @@ function RouteComponent() {
           token: roomStore.token,
         },
       })
-    } else if (roomStore.value && !myPlayer) {
+    } else if (roomStore.value && !myPlayer && !localStorage.getItem("name")) {
       navigate({
         to: "/room/$roomUuid/set-name",
         params: {
@@ -169,9 +182,9 @@ function RouteComponent() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-rose-600/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Real-time Opponent HUD Tracker */}
-        <div className="w-full max-w-4xl z-10 flex flex-col items-center mb-2">
-          <div className="w-full max-w-2xl bg-slate-900/80 border border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-xl mb-4 gap-4 backdrop-blur-md">
-            <div className="flex items-center gap-3">
+        <div className="w-full max-w-4xl z-10 flex flex-col items-center mb-2 px-2">
+          <div className="w-full max-w-2xl bg-slate-900/80 border border-slate-800 p-3 sm:p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between shadow-xl mb-4 gap-3 sm:gap-4 backdrop-blur-md">
+            <div className="flex items-center gap-3 text-left w-full sm:w-auto">
               <div className="p-2 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-xl">
                 <Swords className="w-5 h-5 animate-pulse" />
               </div>
@@ -186,10 +199,10 @@ function RouteComponent() {
             </div>
 
             {/* Forfeit and Minimize Actions */}
-            <div className="flex items-center gap-2">
+            <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto">
               <Button
                 onClick={() => setIsMinimized(true)}
-                className="bg-slate-800 hover:bg-slate-700 text-slate-350 border border-slate-750 px-3 py-1.5 h-auto text-[10px] font-extrabold uppercase rounded-lg cursor-pointer transition-all active:scale-95 flex items-center gap-1"
+                className="bg-slate-800 hover:bg-slate-700 text-slate-350 border border-slate-750 px-3 py-1.5 h-auto text-[10px] font-extrabold uppercase rounded-lg cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-1"
               >
                 Exit to Lobby 🏠
               </Button>
@@ -203,7 +216,7 @@ function RouteComponent() {
                     })
                   }
                 }}
-                className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 hover:border-rose-500/40 px-3 py-1.5 h-auto text-[10px] font-extrabold uppercase rounded-lg cursor-pointer transition-all active:scale-95 flex items-center gap-1"
+                className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 hover:border-rose-500/40 px-3 py-1.5 h-auto text-[10px] font-extrabold uppercase rounded-lg cursor-pointer transition-all active:scale-95 flex items-center justify-center gap-1"
               >
                 Forfeit 🏳️
               </Button>
@@ -294,7 +307,7 @@ function RouteComponent() {
         text: "text-sky-400 font-extrabold",
         badge:
           "bg-sky-500/10 text-sky-400 border-sky-500/25 hover:border-sky-500/50 hover:bg-sky-500/15",
-        label: "👦 Team Boy",
+        label: "👦 Team Mateus",
       }
     }
     if (team === "girl") {
@@ -302,7 +315,7 @@ function RouteComponent() {
         text: "text-pink-400 font-extrabold",
         badge:
           "bg-pink-500/10 text-pink-400 border-pink-500/25 hover:border-pink-500/50 hover:bg-pink-500/15",
-        label: "👧 Team Girl",
+        label: "👧 Team Meira",
       }
     }
     return {
@@ -322,7 +335,7 @@ function RouteComponent() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-600/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Top Header Info Pill */}
-        <div className="absolute top-4 left-4 z-20">
+        <div className="absolute top-4 left-4 right-4 sm:right-auto max-w-[calc(100%-2rem)] z-20">
           <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 px-4 py-2 rounded-xl flex items-center gap-3 text-xs shadow-lg shadow-black/30">
             <span className="text-slate-400 flex items-center gap-2">
               Playing as: <strong className={teamStyles.text}>{name}</strong>
@@ -362,7 +375,7 @@ function RouteComponent() {
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Top Header Info Pill */}
-      <div className="absolute top-4 left-4 z-20">
+      <div className="absolute top-4 left-4 right-4 sm:right-auto max-w-[calc(100%-2rem)] z-20">
         <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 px-4 py-2 rounded-xl flex items-center gap-3 text-xs shadow-lg shadow-black/30">
           <span className="text-slate-400 flex items-center gap-2">
             Claimed Seat:{" "}
@@ -442,6 +455,70 @@ function RouteComponent() {
           </p>
         </div>
 
+        {/* 🏆 Cumulative Team Tournament Standings Scoreboard */}
+        {(() => {
+          const teamScores = (roomStore.value?.data as any)?.team_scores || { boy: 0, girl: 0 }
+          const boyScore = teamScores.boy || 0
+          const girlScore = teamScores.girl || 0
+          const totalPoints = boyScore + girlScore
+          const boyPercent = totalPoints > 0 ? (boyScore / totalPoints) * 100 : 50
+          const girlPercent = totalPoints > 0 ? (girlScore / totalPoints) * 100 : 50
+
+          return (
+            <div className="bg-slate-950/80 border border-slate-850 rounded-2xl p-4.5 shadow-inner space-y-3 relative overflow-hidden text-left font-sans">
+              <div className="flex items-center justify-between border-b border-slate-850/60 pb-2">
+                <div className="flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.2)]" />
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-300">
+                    Team Tournament Standings
+                  </h3>
+                </div>
+                <span className="text-[8px] font-black bg-slate-900 border border-slate-800 text-slate-400 px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                  1 Pt / Win
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {/* Team Boy */}
+                <div className="flex flex-col items-center bg-sky-950/20 border border-sky-900/30 p-2.5 rounded-xl text-center space-y-1">
+                  <span className="text-xl">👦</span>
+                  <span className="text-[9px] font-black uppercase text-sky-400 tracking-wider">Team Mateus</span>
+                  <span className="text-2xl font-black text-slate-100 font-mono tracking-tight drop-shadow-[0_0_12px_rgba(56,189,248,0.3)]">
+                    {boyScore} <span className="text-[10px] text-slate-500 font-extrabold font-sans">PTS</span>
+                  </span>
+                </div>
+
+                {/* Team Girl */}
+                <div className="flex flex-col items-center bg-pink-950/20 border border-pink-900/30 p-2.5 rounded-xl text-center space-y-1">
+                  <span className="text-xl">👧</span>
+                  <span className="text-[9px] font-black uppercase text-pink-400 tracking-wider">Team Meira</span>
+                  <span className="text-2xl font-black text-slate-100 font-mono tracking-tight drop-shadow-[0_0_12px_rgba(244,63,94,0.3)]">
+                    {girlScore} <span className="text-[10px] text-slate-500 font-extrabold font-sans">PTS</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Progress VS bar */}
+              <div className="space-y-1 pt-1">
+                <div className="h-2 w-full bg-slate-900 border border-slate-850 rounded-full overflow-hidden flex">
+                  <div 
+                    className="h-full bg-gradient-to-r from-sky-500 to-sky-400 transition-all duration-500" 
+                    style={{ width: `${boyPercent}%` }}
+                  />
+                  <div 
+                    className="h-full bg-gradient-to-r from-pink-400 to-pink-500 transition-all duration-500" 
+                    style={{ width: `${girlPercent}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-[8px] font-black uppercase text-slate-500 tracking-wider">
+                  <span>{boyPercent.toFixed(0)}% Mateus</span>
+                  <span>{girlPercent.toFixed(0)}% Meira</span>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
+
         {/* Previous Score Display */}
         {prevScore && (
           <div className="p-4 bg-slate-950/60 border border-slate-850 rounded-xl flex items-center justify-between shadow-inner">
@@ -473,6 +550,12 @@ function RouteComponent() {
           const p1 = arena?.player1
           const p2 = arena?.player2
           
+          const p1Player = roomStore.value?.players.find((p) => p.uuid === p1?.uuid)
+          const p1Team = p1Player?.team || ""
+          
+          const p2Player = roomStore.value?.players.find((p) => p.uuid === p2?.uuid)
+          const p2Team = p2Player?.team || ""
+          
           const availablePlayers = (roomStore.value?.players || []).filter(
             (p) => p.uuid !== p1?.uuid && p.uuid !== p2?.uuid && p.uuid && p.name
           )
@@ -486,20 +569,32 @@ function RouteComponent() {
                     1v1 Arena Match
                   </h3>
                 </div>
-                <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider ${
-                  arena?.status === "active" 
-                    ? "bg-rose-500/10 text-rose-400 border border-rose-500/20 animate-pulse" 
-                    : arena?.status === "completed" 
-                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
-                    : arena?.status === "preparing" 
-                    ? "bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse"
-                    : "bg-slate-900 text-slate-500 border border-slate-850"
-                }`}>
-                  {arena?.status || "Idle"}
-                </span>
+                <div className="flex items-center gap-2">
+                  {isAdmin && (arena?.status === "idle" || arena?.status === "preparing") && (
+                    <button
+                      onClick={() => sendMessage({ type: "swap_arena_slots" })}
+                      className="px-2 py-0.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[8px] font-black uppercase text-slate-300 hover:text-white hover:border-sky-500/40 rounded-md transition-all cursor-pointer flex items-center gap-1 active:scale-95 shadow-md"
+                      title="Swap Slot 1 & Slot 2 Players"
+                      type="button"
+                    >
+                      ⇄ Swap Seats
+                    </button>
+                  )}
+                  <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider ${
+                    arena?.status === "active" 
+                      ? "bg-rose-500/10 text-rose-400 border border-rose-500/20 animate-pulse" 
+                      : arena?.status === "completed" 
+                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
+                      : arena?.status === "preparing" 
+                      ? "bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse"
+                      : "bg-slate-900 text-slate-500 border border-slate-850"
+                  }`}>
+                    {arena?.status || "Idle"}
+                  </span>
+                </div>
               </div>
 
-              {isAdmin && arena?.status === "idle" && (
+              {isAdmin && (arena?.status === "idle" || arena?.status === "preparing") && (
                 <div className="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-850 text-[10px]">
                   <span className="text-slate-500 font-bold uppercase tracking-wider text-[8px]">Difficulty</span>
                   <div className="flex gap-1.5">
@@ -508,9 +603,7 @@ function RouteComponent() {
                         key={diff}
                         onClick={() => {
                           sendMessage({
-                            type: "invite_to_arena",
-                            slot: "player1",
-                            target_uuid: p1?.uuid || "",
+                            type: "set_arena_difficulty",
                             difficulty: diff
                           })
                         }}
@@ -544,16 +637,27 @@ function RouteComponent() {
                 }`}>
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-[8px] font-black uppercase tracking-widest text-sky-400">Slot 1 (Left Player)</span>
-                      <h4 className="text-xs font-extrabold text-slate-200 truncate mt-0.5 max-w-[150px]">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-sky-400">Slot 1 (Team Mateus 👦)</span>
+                      <h4 className="text-xs font-extrabold text-slate-200 truncate mt-0.5 max-w-[150px] flex items-center gap-1.5">
                         {p1?.name || "Unoccupied"}
+                        {p1Team && (
+                          <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider ${
+                            p1Team === "boy" 
+                              ? "bg-sky-500/10 text-sky-400 border border-sky-500/20" 
+                              : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                          }`}>
+                            {p1Team === "boy" ? "👦 Mateus" : "👧 Meira"}
+                          </span>
+                        )}
                       </h4>
                       <p className="text-[9px] font-semibold mt-0.5">
                         {p1?.invite_status === "accepted" ? (
                           p1.ready ? (
                             <span className="text-emerald-400 flex items-center gap-1 font-bold">● Ready</span>
                           ) : (
-                            <span className="text-sky-400 flex items-center gap-1">● Seated</span>
+                            <span className="text-sky-400 flex items-center gap-1 font-bold">
+                              ● Seated
+                            </span>
                           )
                         ) : p1?.invite_status === "invited" ? (
                           <span className="text-amber-400 animate-pulse">● Invited...</span>
@@ -596,12 +700,15 @@ function RouteComponent() {
                           }}
                           className="w-full h-8 bg-slate-950 border border-slate-850 text-[10px] font-extrabold uppercase rounded-lg px-2 text-slate-400 hover:border-sky-500/30 transition-all outline-hidden cursor-pointer"
                         >
-                          <option value="">+ Invite Player...</option>
-                          {availablePlayers.map((player) => (
-                            <option key={player.uuid} value={player.uuid}>
-                              {player.name || "Anonymous"}
-                            </option>
-                          ))}
+                          <option value="">+ Seat Player 1 (Mateus Slot)...</option>
+                          {availablePlayers.map((player) => {
+                            const isBoy = player.team === "boy"
+                            return (
+                              <option key={player.uuid} value={player.uuid}>
+                                {player.name || "Anonymous"} ({isBoy ? "👦 Mateus" : "👧 Meira"})
+                              </option>
+                            )
+                          })}
                         </select>
                       ) : (
                         <p className="text-[8px] text-slate-600 italic">No available players</p>
@@ -641,16 +748,27 @@ function RouteComponent() {
                 }`}>
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-[8px] font-black uppercase tracking-widest text-pink-400">Slot 2 (Right Player)</span>
-                      <h4 className="text-xs font-extrabold text-slate-200 truncate mt-0.5 max-w-[150px]">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-pink-400">Slot 2 (Team Meira 👧)</span>
+                      <h4 className="text-xs font-extrabold text-slate-200 truncate mt-0.5 max-w-[150px] flex items-center gap-1.5">
                         {p2?.name || "Unoccupied"}
+                        {p2Team && (
+                          <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider ${
+                            p2Team === "boy" 
+                              ? "bg-sky-500/10 text-sky-400 border border-sky-500/20" 
+                              : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                          }`}>
+                            {p2Team === "boy" ? "👦 Mateus" : "👧 Meira"}
+                          </span>
+                        )}
                       </h4>
                       <p className="text-[9px] font-semibold mt-0.5">
                         {p2?.invite_status === "accepted" ? (
                           p2.ready ? (
                             <span className="text-emerald-400 flex items-center gap-1 font-bold">● Ready</span>
                           ) : (
-                            <span className="text-pink-400 flex items-center gap-1">● Seated</span>
+                            <span className="text-pink-400 flex items-center gap-1 font-bold">
+                              ● Seated
+                            </span>
                           )
                         ) : p2?.invite_status === "invited" ? (
                           <span className="text-amber-400 animate-pulse">● Invited...</span>
@@ -693,12 +811,15 @@ function RouteComponent() {
                           }}
                           className="w-full h-8 bg-slate-950 border border-slate-850 text-[10px] font-extrabold uppercase rounded-lg px-2 text-slate-400 hover:border-pink-500/30 transition-all outline-hidden cursor-pointer"
                         >
-                          <option value="">+ Invite Player...</option>
-                          {availablePlayers.map((player) => (
-                            <option key={player.uuid} value={player.uuid}>
-                              {player.name || "Anonymous"}
-                            </option>
-                          ))}
+                          <option value="">+ Seat Player 2 (Meira Slot)...</option>
+                          {availablePlayers.map((player) => {
+                            const isGirl = player.team === "girl"
+                            return (
+                              <option key={player.uuid} value={player.uuid}>
+                                {player.name || "Anonymous"} ({isGirl ? "👧 Meira" : "👦 Mateus"})
+                              </option>
+                            )
+                          })}
                         </select>
                       ) : (
                         <p className="text-[8px] text-slate-600 italic">No available players</p>
@@ -849,14 +970,14 @@ function RouteComponent() {
             {/* Spectator Arena Button */}
             {isAdmin && (
               <Link
-                to="/room/$roomUuid/battles"
-                params={{ roomUuid }}
+                to="/room/$roomUuid/battles/$battleId"
+                params={{ roomUuid, battleId: "arena" }}
                 search={{ code: roomStore.code ?? "" }}
                 className="block w-full"
               >
                 <Button
                   variant="outline"
-                  className="w-full h-10 bg-slate-950 border-slate-800 hover:bg-slate-900 hover:border-cyan-500/30 text-slate-300 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="w-full h-10 bg-slate-950 border-slate-800 hover:bg-slate-900 hover:border-cyan-500/30 text-slate-350 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Tv className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
                   Spectate Arena Battles
