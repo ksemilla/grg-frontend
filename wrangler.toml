@@ -1,5 +1,6 @@
-name = "your-app-name"
-pages_build_output_dir = "./dist"
+name = "grg-frontend"
+compatibility_date = "2026-05-01"
 
-[routing]
-spa = true
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
