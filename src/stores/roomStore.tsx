@@ -40,6 +40,9 @@ interface RoomState {
 
   value?: RoomValue
   setValue: (value: RoomValue) => void
+
+  socketStatus?: "connecting" | "connected" | "disconnected"
+  setSocketStatus: (status: "connecting" | "connected" | "disconnected") => void
 }
 
 export const useRoomStore = create<RoomState>()((set) => ({
@@ -54,4 +57,6 @@ export const useRoomStore = create<RoomState>()((set) => ({
   setSomething: (data) => set((state) => ({ ...state, something: data })),
 
   setValue: (value) => set((state) => ({ ...state, value })),
+  socketStatus: "disconnected",
+  setSocketStatus: (socketStatus) => set((state) => ({ ...state, socketStatus })),
 }))

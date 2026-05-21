@@ -2,7 +2,7 @@ import { MessageProvider } from "@/components/message-provider"
 import { useRoomSocket } from "@/hooks/useRoomSocket"
 import { useRoomStore } from "@/stores/roomStore"
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router"
-import { ShieldIcon } from "lucide-react"
+import { ShieldIcon, RefreshCw } from "lucide-react"
 import { useEffect } from "react"
 
 type RoomSearchParams = {
@@ -25,7 +25,7 @@ function RouteComponent() {
   const roomStore = useRoomStore()
   const myUuid = localStorage.getItem("uuid")
   const { code, token } = Route.useSearch()
-  const { sendMessage } = useRoomSocket(
+  const { sendMessage, reconnect } = useRoomSocket(
     roomUuid,
     roomStore.code,
     roomStore.token
@@ -88,6 +88,47 @@ function RouteComponent() {
 
   return (
     <>
+      {/* Global Connection Status Indicator & Reconnect Trigger */}
+      <div className="fixed bottom-4 right-4 z-30 flex items-center gap-2">
+        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border backdrop-blur-md transition-all duration-300 text-xs font-bold shadow-lg select-none ${
+          roomStore.socketStatus === "connected"
+            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+            : roomStore.socketStatus === "connecting"
+            ? "bg-amber-500/10 border-amber-500/20 text-amber-400 animate-pulse"
+            : "bg-rose-500/10 border-rose-500/20 text-rose-400"
+        }`}>
+          {roomStore.socketStatus === "connected" && (
+            <>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping absolute" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 relative animate-pulse" />
+              <span className="font-mono text-[10px] uppercase tracking-wider">Live</span>
+            </>
+          )}
+          {roomStore.socketStatus === "connecting" && (
+            <>
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              <span className="font-mono text-[10px] uppercase tracking-wider">Connecting...</span>
+            </>
+          )}
+          {roomStore.socketStatus === "disconnected" && (
+            <>
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+              <span className="font-mono text-[10px] uppercase tracking-wider">Offline</span>
+            </>
+          )}
+        </div>
+
+        {roomStore.socketStatus !== "connected" && (
+          <button
+            onClick={() => reconnect()}
+            className="p-1.5 bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center cursor-pointer"
+            title="Reconnect to Session"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+
       <div className="fixed top-4 right-4 z-30">
         {showAdminButton && (
           <Link

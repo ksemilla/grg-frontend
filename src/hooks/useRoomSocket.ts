@@ -38,10 +38,12 @@ export function useRoomSocket(
   const retryRef = useRef(0)
   const navigate = useNavigate()
   const roomStore = useRoomStore()
+  const connectFnRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     let shouldReconnect = true
     const connect = () => {
+      roomStore.setSocketStatus("connecting")
       let wsRoot = BASE_WS
       if (!wsRoot.endsWith("/ws") && !wsRoot.endsWith("/ws/")) {
         wsRoot = wsRoot.replace(/\/$/, "") + "/ws"
@@ -53,6 +55,8 @@ export function useRoomSocket(
       socketRef.current = getRoomWebSocket(BASE_URL)
 
       socketRef.current.onopen = () => {
+        roomStore.setSocketStatus("connected")
+        retryRef.current = 0
         const uuid = localStorage.getItem("uuid")
         if (uuid) {
           socketRef.current?.send(
@@ -86,7 +90,6 @@ export function useRoomSocket(
             }
             break
           case "clear.player":
-            // Deriving dynamically now; client reacts to DB deletions instantly
             break
           case "blocked.player":
             roomStore.setIsBlocked(true)
@@ -101,21 +104,14 @@ export function useRoomSocket(
       }
 
       socketRef.current.onclose = () => {
+        roomStore.setSocketStatus("disconnected")
         if (shouldReconnect) {
           const timeout = Math.min(1000 * 2 ** retryRef.current, 30000)
           retryRef.current++
-          if (retryRef.current >= 3) {
-            roomStore.setCode("")
-            roomStore.setToken("")
-            navigate({
-              to: "/",
-            })
-          } else {
+          if (retryRef.current < 3) {
+            roomStore.setSocketStatus("connecting")
             setTimeout(connect, timeout)
           }
-        } else {
-          roomStore.setCode("")
-          roomStore.setToken("")
         }
       }
       socketRef.current.onerror = () => {
@@ -123,13 +119,22 @@ export function useRoomSocket(
       }
     }
 
+    connectFnRef.current = connect
     code && connect()
 
     return () => {
       shouldReconnect = false
       socketRef.current?.close()
     }
-  }, [code, token])
+  }, [code, token, roomUuid])
+
+  const reconnect = () => {
+    retryRef.current = 0
+    if (socketRef.current && socketRef.current.readyState !== WebSocket.CLOSED) {
+      socketRef.current.close()
+    }
+    connectFnRef.current?.()
+  }
 
   const sendMessage = (msg: Message) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
@@ -137,5 +142,5 @@ export function useRoomSocket(
     }
   }
 
-  return { sendMessage }
+  return { sendMessage, reconnect }
 }
