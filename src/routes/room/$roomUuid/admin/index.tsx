@@ -8,8 +8,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { useRoomStore } from "@/stores/roomStore"
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
-import { useState } from "react"
+import { createFileRoute, Link } from "@tanstack/react-router"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { ShieldCheck, RefreshCw, LogOut, Ban, Users, Search, KeyRound } from "lucide-react"
 
@@ -53,6 +53,17 @@ function PlayerEditDialog({
   const [isPlayerAdmin, setIsPlayerAdmin] = useState(pn.is_admin || false)
   const [isPlayerBlocked, setIsPlayerBlocked] = useState(pn.is_blocked || false)
   const [isOpen, setIsOpen] = useState(false)
+
+  // Synchronize component states with latest real-time WebSocket data when dialog opens or player data changes
+  useEffect(() => {
+    if (isOpen) {
+      setName(pn.name || "")
+      setScore(pn.score || 0)
+      setTeam(pn.team || "")
+      setIsPlayerAdmin(pn.is_admin || false)
+      setIsPlayerBlocked(pn.is_blocked || false)
+    }
+  }, [isOpen, pn])
 
   const handleSave = () => {
     sendMessage({
@@ -221,41 +232,11 @@ function RouteComponent() {
   const search = Route.useSearch() as AdminSearchParams
   const { sendMessage } = useMessage()
   const roomStore = useRoomStore()
-  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState("")
-  const [authEmail, setAuthEmail] = useState("")
-  const [authLoading, setAuthLoading] = useState(false)
-  const [authError, setAuthError] = useState("")
-
-  const BASE_API = import.meta.env.VITE_APP_ROOT_API
-
-  const handleAdminAuth = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!authEmail.trim()) return
-    setAuthLoading(true)
-    setAuthError("")
-    try {
-      const res = await fetch(`${BASE_API}/room/${roomUuid}/auth/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: authEmail.trim(), room_uuid: roomUuid }),
-      })
-      if (!res.ok) throw new Error("Auth failed")
-      const data = await res.json()
-      const token = data.token
-      // Navigate to admin page with the token in the URL.
-      // This causes route.tsx's useRoomSocket to reconnect with is_admin=True on backend.
-      navigate({
-        to: "/room/$roomUuid/admin",
-        params: { roomUuid },
-        search: { code: roomStore.code ?? search.code ?? "", token },
-      })
-    } catch {
-      setAuthError("Authentication failed. Make sure your email is correct.")
-    } finally {
-      setAuthLoading(false)
-    }
-  }
+  const myUuid = localStorage.getItem("uuid")
+  
+  const myPlayerIsAdmin = roomStore.value?.players?.find(p => p.uuid === myUuid)?.is_admin ?? false
+  const isAuthorizedAdmin = roomStore.isAdmin || myPlayerIsAdmin
 
   const clearPlayer = (uuid: string, name: string) => {
     sendMessage({ type: "clear_player", uuid: uuid || "", name: name || "" })
@@ -271,53 +252,38 @@ function RouteComponent() {
 
   const force = () => sendMessage({ type: "force_update" })
 
-  // ── NOT YET AUTHENTICATED ──────────────────────────────────────────────────
-  if (!roomStore.isAdmin) {
+  // ── ACCESS DENIED ──────────────────────────────────────────────────────────
+  if (!isAuthorizedAdmin) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center px-4 relative overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-rose-600/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-600/5 rounded-full blur-3xl pointer-events-none" />
+        {/* Deep red glowing pulse effects */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-rose-600/5 rounded-full blur-3xl pointer-events-none animate-pulse duration-[4000ms]" />
 
-        <div className="w-full max-w-sm bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10 space-y-6 animate-in fade-in zoom-in duration-300">
+        <div className="w-full max-w-sm bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10 text-center space-y-6 animate-in fade-in zoom-in duration-300">
           <div className="text-center space-y-2">
-            <div className="inline-flex p-3 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20 mb-2">
+            <div className="inline-flex p-3.5 bg-rose-500/10 text-rose-500 rounded-2xl border border-rose-500/20 mb-2">
               <KeyRound className="w-8 h-8" />
             </div>
-            <h1 className="text-xl font-bold tracking-tight">Host Authentication</h1>
-            <p className="text-slate-400 text-xs px-2">
-              Enter your host email address to authenticate as room administrator.
+            <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-rose-500 via-red-400 to-rose-600 bg-clip-text text-transparent">
+              Access Denied
+            </h1>
+            <p className="text-slate-400 text-xs leading-relaxed px-2">
+              You do not have administrative privileges to access the Host Control Center. Please ask the lobby host or another admin to elevate your role in the player list.
             </p>
           </div>
-
-          <form onSubmit={handleAdminAuth} className="space-y-3">
-            <Input
-              type="email"
-              placeholder="host@example.com"
-              value={authEmail}
-              onChange={(e) => setAuthEmail(e.target.value)}
-              className="bg-slate-950/50 border-slate-800 text-slate-100 placeholder-slate-600 focus-visible:ring-rose-500/50 focus-visible:border-rose-500/50 h-11 text-center"
-              required
-            />
-            {authError && (
-              <p className="text-xs text-rose-400 text-center font-medium">{authError}</p>
-            )}
-            <Button
-              type="submit"
-              disabled={authLoading || !authEmail.trim()}
-              className="w-full h-11 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold rounded-xl shadow-lg transition-all cursor-pointer disabled:opacity-50"
-            >
-              {authLoading ? "Authenticating…" : "Authenticate as Host"}
-            </Button>
-          </form>
 
           <Link
             to="/room/$roomUuid"
             params={{ roomUuid }}
-            search={{ code: roomStore.code ?? "" }}
-            className="block text-center text-xs text-slate-500 hover:text-slate-400 transition-colors"
+            search={{ code: roomStore.code ?? search.code ?? "" }}
+            className="inline-flex w-full items-center justify-center h-10 bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-slate-700 text-slate-400 hover:text-white rounded-xl shadow-lg transition-all active:scale-95 text-xs font-bold cursor-pointer"
           >
             ← Back to Lobby
           </Link>
+
+          <div className="pt-2 border-t border-slate-800/60 text-[9px] text-slate-500 font-mono">
+            IDENTIFIER: {myUuid || "UNKNOWN"}
+          </div>
         </div>
       </div>
     )

@@ -101,11 +101,6 @@ export function MemoryGame({
   onBackToLobby,
   onBattleStateUpdate,
 }: MemoryGameProps) {
-  const baseScore = n * 10
-  const maxBonus = 1000
-  const targetTime = 1 * 30 * 100
-  const power = 2
-
   const initialSeed = seed !== 0 ? seed : 1234
   const getAvailableIcons = shuffle(availableIcons, initialSeed).slice(0, n)
 
@@ -117,6 +112,11 @@ export function MemoryGame({
 
   const [paused, setPaused] = useState(true)
   const [isGameComplete, setIsGameComplete] = useState(false)
+  const [hasReportedScore, setHasReportedScore] = useState(false)
+  const [matchedCount, setMatchedCount] = useState(0)
+  const [counter, setCounter] = useState(0) // ms
+  const startRef = useRef(0)
+  const timer = (counter / 1000).toFixed(2)
   const [selected, setSelected] = useState<number[]>([])
   const [score, setScore] = useState<number | null>(0)
 
@@ -139,6 +139,8 @@ export function MemoryGame({
   const startWithCountdown = async () => {
     setPaused(true)
     setIsGameComplete(false)
+    setHasReportedScore(false)
+    setMatchedCount(0)
     setCounter(0)
     setScore(0)
     setSelected([])
@@ -180,19 +182,44 @@ export function MemoryGame({
           hide(selected[1])
           await wait(150)
         } else {
-          setScore((prev) =>
-            Math.round(
-              (prev || 0) +
-                (baseScore +
-                  maxBonus *
-                    Math.pow(
-                      targetTime / Math.floor(counter / 10 + targetTime),
-                      power
-                    )) *
-                  (n / 6) *
-                  show.filter((v) => !v).length
-            )
-          )
+          setScore((prev) => {
+            const currentPoints = prev || 0
+            
+            // Mathematically precise difficulty configuration for exact target ranges:
+            // Easy (n=6): 800 - 1200 points
+            // Normal (n=10): 1600 - 2400 points
+            // Hard (n=20): 2500 - 3500 points
+            const difficultyScores: Record<number, { base: number; bonus: number }> = {
+              6:  { base: 133.34, bonus: 66.66 }, // base total = ~800,  bonus total = ~400  -> Max: 1200
+              10: { base: 160.00, bonus: 80.00 }, // base total = ~1600, bonus total = ~800  -> Max: 2400
+              20: { base: 125.00, bonus: 50.00 }, // base total = ~2500, bonus total = ~1000 -> Max: 3500
+            }
+            
+            const config = difficultyScores[n] || { base: 50 * (n / 6), bonus: 150 * (n / 6) }
+            const matchBase = config.base
+            
+            // Speed decay factor: starts at 1.0, decays exponentially with time (half-life around 35 seconds)
+            const timeDecay = Math.exp(-counter / 35000)
+            const matchBonus = config.bonus * timeDecay
+            
+            return Math.round(currentPoints + matchBase + matchBonus)
+          })
+
+          setMatchedCount((prev) => {
+            const next = prev + 1
+            if (next === n) {
+              const handleGameComplete = async () => {
+                setPaused(true)
+                // Brief pause for matched-cards animation to settle
+                await wait(100)
+                setIsGameComplete(true)
+                await wait(3000)
+                onBackToLobby?.()
+              }
+              handleGameComplete()
+            }
+            return next
+          })
           await wait(100)
         }
 
@@ -203,35 +230,20 @@ export function MemoryGame({
     runSequence()
   }, [selected])
 
-  // 🎉 Dedicated Game Completion Trigger
+  // Report final score cleanly once committed to React state to prevent race conditions
   useEffect(() => {
-    if (show.length > 0 && show.every((el) => el) && !isGameComplete) {
-      const handleGameComplete = async () => {
-        setPaused(true)
-        // Brief pause for matched-cards animation to settle
-        await wait(100)
-        setIsGameComplete(true)
-
-        onScore?.({
-          score: score ?? 0,
-          time: timer,
-        })
-
-        await wait(3000)
-        onBackToLobby?.()
-      }
-      handleGameComplete()
+    if (isGameComplete && score !== null && !hasReportedScore) {
+      setHasReportedScore(true)
+      onScore?.({
+        score: score,
+        time: timer,
+      })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [show, isGameComplete])
+  }, [isGameComplete, score, timer, hasReportedScore, onScore, matchedCount])
 
   const restart = () => {
     startWithCountdown()
   }
-
-  const [counter, setCounter] = useState(0) // ms
-  const startRef = useRef(0)
-  const timer = (counter / 1000).toFixed(2)
 
   useEffect(() => {
     if (paused) return

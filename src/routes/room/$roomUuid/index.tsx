@@ -12,7 +12,12 @@ import {
   Gauge,
   User,
   Tv,
+  QrCode,
+  Copy,
+  Check,
+  Users,
 } from "lucide-react"
+import QRCode from "react-qr-code"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -49,6 +54,18 @@ function RouteComponent() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [nPairs, setNPairs] = useState<6 | 8 | 10>(6) // Default 6 pairs (12 tiles)
   const [isDiffModalOpen, setIsDiffModalOpen] = useState(false)
+
+  // 👥 Lobby Share and Invitation States
+  const [copied, setCopied] = useState(false)
+  const [isQrOpen, setIsQrOpen] = useState(false)
+
+  const shareUrl = `${window.location.origin}/room/${roomUuid}${roomStore.code ? `?code=${roomStore.code}` : ""}`
+
+  const handleCopyLink = useCallback(() => {
+    navigator.clipboard.writeText(shareUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }, [shareUrl])
 
   // ⚔️ 1v1 Arena State Hooks
   const [isMinimized, setIsMinimized] = useState(false)
@@ -946,6 +963,87 @@ function RouteComponent() {
               </div>
             </DialogContent>
           </Dialog>
+          {/* 👥 Invite Duelists (2 Ways to Share) */}
+          <div className="bg-slate-950/40 border border-slate-850/80 rounded-2xl p-4 text-left space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-850/60 pb-2.5">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-violet-400" />
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-350">
+                  Invite Duelists
+                </h3>
+              </div>
+              <span className="text-[8px] font-mono font-black text-slate-500 uppercase tracking-widest">
+                2 Ways to share
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              {/* Copy URL Link Button */}
+              <Button
+                onClick={handleCopyLink}
+                className={`h-9.5 text-[10px] font-extrabold uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-md ${
+                  copied
+                    ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                    : "bg-slate-950 border border-slate-850 hover:bg-slate-900 hover:border-violet-500/30 text-slate-300"
+                }`}
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" /> Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-violet-400" /> Copy Link
+                  </>
+                )}
+              </Button>
+
+              {/* QR Code Dialog Popup */}
+              <Dialog open={isQrOpen} onOpenChange={setIsQrOpen}>
+                <DialogTrigger asChild>
+                  <Button className="h-9.5 bg-slate-950 border border-slate-850 hover:bg-slate-900 hover:border-cyan-500/30 text-slate-300 text-[10px] font-extrabold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-95">
+                    <QrCode className="w-3.5 h-3.5 text-cyan-400" /> Show QR Code
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-slate-900 border border-slate-850 text-slate-100 max-w-[calc(100%-2rem)] sm:max-w-sm rounded-2xl shadow-2xl p-6 select-none flex flex-col items-center justify-center text-center gap-4">
+                  <div className="flex flex-col items-center justify-center text-center space-y-4 py-2 w-full">
+                    <div className="flex flex-col items-center justify-center text-center space-y-1 w-full">
+                      <div className="inline-flex p-3 bg-cyan-500/10 text-cyan-400 rounded-2xl border border-cyan-500/20 mb-1">
+                        <QrCode className="w-6 h-6 animate-pulse" />
+                      </div>
+                      <DialogTitle className="text-lg font-bold text-center w-full">
+                        Scan to Join Duel!
+                      </DialogTitle>
+                      <DialogDescription className="text-slate-400 text-xs mt-0.5 text-center w-full">
+                        Point a smartphone camera at this QR code to join the game lobby instantly.
+                      </DialogDescription>
+                    </div>
+
+                    {/* QR Code Canvas frame */}
+                    <div className="mx-auto w-48 h-48 bg-white p-3 rounded-2xl shadow-inner border border-slate-800 flex items-center justify-center shrink-0">
+                      <QRCode
+                        value={shareUrl}
+                        size={168}
+                        style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                        viewBox={`0 0 168 168`}
+                      />
+                    </div>
+
+                    <div className="bg-slate-950/80 border border-slate-850 p-2.5 rounded-xl font-mono text-[9px] text-slate-400 select-all flex items-center justify-between gap-2 overflow-hidden w-full shrink-0">
+                      <span className="truncate min-w-0 flex-1 text-left">{shareUrl}</span>
+                      <button
+                        onClick={handleCopyLink}
+                        className="p-1 hover:text-white transition-colors cursor-pointer text-slate-500 shrink-0"
+                        title="Copy URL"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
 
           <div className="space-y-3">
             {/* See High Scores */}
