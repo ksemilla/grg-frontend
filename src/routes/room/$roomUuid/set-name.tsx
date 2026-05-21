@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useRoomStore } from "@/stores/roomStore"
 import {
@@ -8,11 +7,11 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
-import { useEffect, useState } from "react"
+import { createFileRoute, Link } from "@tanstack/react-router"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useMessage } from "@/components/message-provider"
-import { UserCheck, Search, Users, ShieldAlert } from "lucide-react"
+import { Users } from "lucide-react"
 
 export const Route = createFileRoute("/room/$roomUuid/set-name")({
   component: RouteComponent,
@@ -24,14 +23,8 @@ function RouteComponent() {
   const roomStore = useRoomStore()
   const myPlayer = roomStore.value?.players.find((p) => p.uuid === uuid)
   const hasExistingName = !!myPlayer?.name
-  const navigate = useNavigate()
   const [name, setName] = useState("")
   const { sendMessage } = useMessage()
-
-  const filteredOptions =
-    roomStore.value?.players.filter(
-      (pn) => pn.name.toLowerCase().includes(name.toLowerCase()) && !pn.uuid
-    ) ?? []
 
   const setPlayer = (player_name: string, team: "boy" | "girl") => {
     if (uuid) {
@@ -45,8 +38,6 @@ function RouteComponent() {
     }
   }
 
-
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center px-4 relative overflow-hidden">
       {/* Background glowing effects */}
@@ -55,17 +46,17 @@ function RouteComponent() {
 
       {/* Main Card */}
       <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10 space-y-6 animate-in fade-in zoom-in duration-300">
-        
         {/* Header Block */}
         <div className="text-center space-y-2">
           <div className="inline-flex p-3 bg-violet-500/10 text-violet-400 rounded-xl border border-violet-500/20 mb-2">
             <Users className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold tracking-tight bg-linear-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">
             Choose Your Name
           </h1>
           <p className="text-slate-400 text-xs px-4">
-            Type your player name to get started and claim your leaderboard slot.
+            Type your player name to get started and claim your leaderboard
+            slot.
           </p>
         </div>
 
@@ -85,7 +76,7 @@ function RouteComponent() {
             <DialogTrigger asChild>
               <Button
                 disabled={name.trim().length < 2}
-                className="w-full h-11 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold rounded-xl shadow-lg shadow-violet-900/20 transition-all hover:scale-[1.01] active:scale-95 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                className="w-full h-11 bg-linear-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-semibold rounded-xl shadow-lg shadow-violet-900/20 transition-all hover:scale-[1.01] active:scale-95 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
               >
                 Join Lobby
               </Button>
@@ -94,37 +85,45 @@ function RouteComponent() {
               <div className="space-y-5 text-center py-2">
                 <div className="space-y-1">
                   <DialogTitle className="text-2xl font-bold text-center">
-                    Welcome, <span className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">{name.trim()}</span>!
+                    Welcome,{" "}
+                    <span className="bg-linear-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
+                      {name.trim()}
+                    </span>
+                    !
                   </DialogTitle>
                   <DialogDescription className="text-slate-400 text-sm font-medium">
                     Which team are you on?
                   </DialogDescription>
                 </div>
-                
+
                 {/* Team Options */}
                 <div className="grid grid-cols-2 gap-4 pt-3">
                   {/* Team Boy */}
-                  <Button 
+                  <Button
                     onClick={() => setPlayer(name.trim(), "boy")}
-                    className="h-28 bg-gradient-to-br from-sky-600 to-cyan-700 hover:from-sky-500 hover:to-cyan-600 text-white font-bold rounded-xl shadow-lg shadow-sky-900/40 transition-all hover:scale-[1.03] active:scale-95 flex flex-col gap-2 border border-sky-400/20 cursor-pointer"
+                    className="h-28 bg-linear-to-br from-sky-600 to-cyan-700 hover:from-sky-500 hover:to-cyan-600 text-white font-bold rounded-xl shadow-lg shadow-sky-900/40 transition-all hover:scale-[1.03] active:scale-95 flex flex-col gap-2 border border-sky-400/20 cursor-pointer"
                   >
                     <span className="text-3xl">👦</span>
-                    <span className="tracking-wide text-sm font-extrabold uppercase">Team Boy</span>
+                    <span className="tracking-wide text-sm font-extrabold uppercase">
+                      Team Boy
+                    </span>
                   </Button>
 
                   {/* Team Girl */}
-                  <Button 
+                  <Button
                     onClick={() => setPlayer(name.trim(), "girl")}
-                    className="h-28 bg-gradient-to-br from-pink-600 to-rose-700 hover:from-pink-500 hover:to-rose-600 text-white font-bold rounded-xl shadow-lg shadow-rose-900/40 transition-all hover:scale-[1.03] active:scale-95 flex flex-col gap-2 border border-pink-400/20 cursor-pointer"
+                    className="h-28 bg-linear-to-br from-pink-600 to-rose-700 hover:from-pink-500 hover:to-rose-600 text-white font-bold rounded-xl shadow-lg shadow-rose-900/40 transition-all hover:scale-[1.03] active:scale-95 flex flex-col gap-2 border border-pink-400/20 cursor-pointer"
                   >
                     <span className="text-3xl">👧</span>
-                    <span className="tracking-wide text-sm font-extrabold uppercase">Team Girl</span>
+                    <span className="tracking-wide text-sm font-extrabold uppercase">
+                      Team Girl
+                    </span>
                   </Button>
                 </div>
               </div>
             </DialogContent>
           </Dialog>
-          
+
           {hasExistingName && (
             <Link
               to="/room/$roomUuid"
@@ -137,7 +136,7 @@ function RouteComponent() {
           )}
         </div>
       </div>
-      
+
       <p className="absolute bottom-6 text-[10px] text-slate-600 font-mono">
         ROOM ID: {roomUuid}
       </p>
