@@ -93,7 +93,7 @@ function PlayerEditDialog({
           <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${badgeStyle}`}>{badgeText}</span>
         </div>
       </DialogTrigger>
-      <DialogContent className="bg-slate-900 border-slate-800 text-slate-100 max-w-sm rounded-xl overflow-y-auto max-h-[90vh]">
+      <DialogContent className="bg-slate-900 border-slate-800 text-slate-100 max-w-[calc(100%-2rem)] sm:max-w-sm rounded-xl overflow-y-auto max-h-[90vh]">
         <div className="space-y-4 py-3 text-left">
           <div className="text-center">
             <div className={`inline-flex p-3 rounded-full border mb-2 ${isBlocked ? "bg-rose-500/10 text-rose-500 border-rose-500/20" : "bg-slate-500/10 text-slate-400 border-slate-500/20"}`}>
@@ -291,40 +291,40 @@ function RouteComponent() {
 
   // ── AUTHENTICATED ADMIN PANEL ──────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center py-6 px-4 relative overflow-hidden">
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-rose-600/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-600/5 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="w-full max-w-lg bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10 space-y-8 animate-in fade-in zoom-in duration-300">
+      <div className="w-full max-w-lg bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-4 sm:p-8 rounded-2xl shadow-2xl relative z-10 space-y-6 sm:space-y-8 animate-in fade-in zoom-in duration-300">
         
         <div className="flex flex-col gap-4 border-b border-slate-800/80 pb-5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20">
+              <div className="p-2.5 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20 shrink-0">
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-xl font-bold tracking-tight">Host Control Center</h1>
-                <p className="text-slate-500 text-[11px] font-medium tracking-wide uppercase">Lobby Manager</p>
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight">Host Control Center</h1>
+                <p className="text-slate-500 text-[10px] sm:text-[11px] font-medium tracking-wide uppercase">Lobby Manager</p>
               </div>
             </div>
             <Button
               onClick={force}
               variant="outline"
               size="sm"
-              className="bg-slate-950 border-slate-800 hover:bg-slate-800 text-slate-300 flex items-center gap-1.5 h-9 cursor-pointer"
+              className="bg-slate-950 border-slate-800 hover:bg-slate-800 text-slate-300 flex items-center justify-center gap-1.5 h-9 cursor-pointer w-full sm:w-auto text-xs"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Force Refresh
             </Button>
           </div>
 
-          <div className="flex gap-2 w-full pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full pt-1">
             <Link
               to="/room/$roomUuid"
               params={{ roomUuid }}
               search={{ code: roomStore.code, token: roomStore.token }}
-              className="flex-1"
+              className="w-full"
             >
               <Button variant="outline" size="sm" className="w-full bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-300 text-xs flex items-center justify-center gap-1.5 h-9 cursor-pointer">
                 🎮 Go to Game Board
@@ -334,7 +334,7 @@ function RouteComponent() {
               to="/room/$roomUuid/set-name"
               params={{ roomUuid }}
               search={{ code: roomStore.code, token: roomStore.token }}
-              className="flex-1"
+              className="w-full"
             >
               <Button variant="outline" size="sm" className="w-full bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-300 text-xs flex items-center justify-center gap-1.5 h-9 cursor-pointer">
                 👤 Reset / Choose Name

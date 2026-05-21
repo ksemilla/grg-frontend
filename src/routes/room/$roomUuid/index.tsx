@@ -75,14 +75,18 @@ function RouteComponent() {
   const isPlayer2 = arena?.player2?.uuid === myUuid
   const mySlot = isPlayer1 ? "player1" : isPlayer2 ? "player2" : null
   const opponentSlot = isPlayer1 ? "player2" : isPlayer2 ? "player1" : null
-  const opponentName = opponentSlot ? (arena?.[opponentSlot]?.name || "Opponent") : "Opponent"
-  
+  const opponentName = opponentSlot
+    ? arena?.[opponentSlot]?.name || "Opponent"
+    : "Opponent"
+
   const isSeated = !!mySlot
-  const myPlayerIsAdmin = roomStore.value?.players.find(p => p.uuid === myUuid)?.is_admin ?? false
+  const myPlayerIsAdmin =
+    roomStore.value?.players.find((p) => p.uuid === myUuid)?.is_admin ?? false
   const isAdmin = roomStore.isAdmin || myPlayerIsAdmin
-  
+
   const activeBattle = arena?.status === "active" && isSeated ? arena : null
-  const completedBattle = arena?.status === "completed" && isSeated ? arena : null
+  const completedBattle =
+    arena?.status === "completed" && isSeated ? arena : null
 
   // Automatically open the game board when a new duel begins
   useEffect(() => {
@@ -122,7 +126,7 @@ function RouteComponent() {
           token: roomStore.token,
         },
       })
-    } else if (roomStore.value && !myPlayer) {
+    } else if (roomStore.value && !myPlayer && !localStorage.getItem("name")) {
       navigate({
         to: "/room/$roomUuid/set-name",
         params: {
@@ -159,19 +163,25 @@ function RouteComponent() {
     setIsPlaying(true)
   }
 
-
-
-  const onBattleStateUpdate = useCallback((data: { score: number; timer: string; show: boolean[]; finished: boolean }) => {
-    if (!activeBattle) return
-    sendMessage({
-      type: "update_arena_state",
-      uuid: myUuid,
-      score: data.score,
-      timer: data.timer,
-      show: data.show,
-      finished: data.finished,
-    })
-  }, [sendMessage, activeBattle, myUuid])
+  const onBattleStateUpdate = useCallback(
+    (data: {
+      score: number
+      timer: string
+      show: boolean[]
+      finished: boolean
+    }) => {
+      if (!activeBattle) return
+      sendMessage({
+        type: "update_arena_state",
+        uuid: myUuid,
+        score: data.score,
+        timer: data.timer,
+        show: data.show,
+        finished: data.finished,
+      })
+    },
+    [sendMessage, activeBattle, myUuid]
+  )
 
   const onBattleBackToLobby = useCallback(() => {
     if (!activeBattle) return
@@ -189,10 +199,17 @@ function RouteComponent() {
 
   // ⚔️ RENDER ACTIVE 1v1 BATTLE SCREEN
   if (activeBattle && !isMinimized) {
-    const battleN = activeBattle.difficulty === "easy" ? 6 : activeBattle.difficulty === "normal" ? 8 : 10
+    const battleN =
+      activeBattle.difficulty === "easy"
+        ? 6
+        : activeBattle.difficulty === "normal"
+          ? 8
+          : 10
     const isChallenger = activeBattle.challenger_uuid === myUuid
-    const opponentName = isChallenger ? activeBattle.challenged_name : activeBattle.challenger_name
-    
+    const opponentName = isChallenger
+      ? activeBattle.challenged_name
+      : activeBattle.challenger_name
+
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-600/5 rounded-full blur-3xl pointer-events-none" />
@@ -225,7 +242,11 @@ function RouteComponent() {
               </Button>
               <Button
                 onClick={() => {
-                  if (confirm("Are you sure you want to forfeit this match and accept defeat?")) {
+                  if (
+                    confirm(
+                      "Are you sure you want to forfeit this match and accept defeat?"
+                    )
+                  ) {
                     sendMessage({
                       type: "update_arena_state",
                       uuid: myUuid,
@@ -255,31 +276,44 @@ function RouteComponent() {
   // 🏆 RENDER COMPLETED 1v1 BATTLE RESULT SCREEN
   if (completedBattle) {
     const isWinner = completedBattle.winner === myUuid
-    
+
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center px-4 relative overflow-hidden">
-        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-3xl pointer-events-none animate-pulse ${
-          isWinner ? "bg-emerald-500/10" : "bg-rose-500/10"
-        }`} />
+        <div
+          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-3xl pointer-events-none animate-pulse ${
+            isWinner ? "bg-emerald-500/10" : "bg-rose-500/10"
+          }`}
+        />
 
         <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10 text-center space-y-6">
-          <div className={`inline-flex p-4 rounded-2xl border mb-2 ${
-            isWinner ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 animate-bounce" : "bg-rose-500/10 border-rose-500/20 text-rose-400 animate-pulse"
-          }`}>
-            {isWinner ? <Trophy className="w-10 h-10" /> : <Swords className="w-10 h-10 animate-pulse" />}
+          <div
+            className={`inline-flex p-4 rounded-2xl border mb-2 ${
+              isWinner
+                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 animate-bounce"
+                : "bg-rose-500/10 border-rose-500/20 text-rose-400 animate-pulse"
+            }`}
+          >
+            {isWinner ? (
+              <Trophy className="w-10 h-10" />
+            ) : (
+              <Swords className="w-10 h-10 animate-pulse" />
+            )}
           </div>
-          
+
           <div className="space-y-2">
-            <h1 className={`text-3xl font-extrabold tracking-tight bg-gradient-to-r bg-clip-text text-transparent ${
-              isWinner ? "from-emerald-400 to-teal-500" : "from-rose-400 to-red-500"
-            }`}>
+            <h1
+              className={`text-3xl font-extrabold tracking-tight bg-gradient-to-r bg-clip-text text-transparent ${
+                isWinner
+                  ? "from-emerald-400 to-teal-500"
+                  : "from-rose-400 to-red-500"
+              }`}
+            >
               {isWinner ? "🏆 VICTORY!" : "💀 DEFEAT!"}
             </h1>
             <p className="text-slate-400 text-xs px-4">
-              {isWinner 
+              {isWinner
                 ? `Incredible recall! You defeated ${opponentName} in the head-to-head match!`
-                : `${opponentName} matched their tiles faster. Better luck next time!`
-              }
+                : `${opponentName} matched their tiles faster. Better luck next time!`}
             </p>
           </div>
 
@@ -352,8 +386,8 @@ function RouteComponent() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-600/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Top Header Info Pill */}
-        <div className="absolute top-4 left-4 right-4 sm:right-auto max-w-[calc(100%-2rem)] z-20">
-          <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 px-4 py-2 rounded-xl flex items-center gap-3 text-xs shadow-lg shadow-black/30">
+        <div className="absolute top-4 left-4 max-w-[calc(100%-2rem)] z-20">
+          <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl flex items-center gap-3 text-xs shadow-lg shadow-black/30">
             <span className="text-slate-400 flex items-center gap-2">
               Playing as: <strong className={teamStyles.text}>{name}</strong>
               {team && (
@@ -386,14 +420,14 @@ function RouteComponent() {
 
   // 🏡 RENDER LOBBY / MENU SCREEN
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center px-4 py-8 relative overflow-y-auto">
       {/* Background glowing effects */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Top Header Info Pill */}
-      <div className="absolute top-4 left-4 right-4 sm:right-auto max-w-[calc(100%-2rem)] z-20">
-        <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 px-4 py-2 rounded-xl flex items-center gap-3 text-xs shadow-lg shadow-black/30">
+      {/* Top Header Info Pill - stacked vertically to avoid overlapping */}
+      <div className="w-full max-w-md mb-4 flex justify-center sm:justify-start z-20">
+        <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 px-4 py-2 rounded-xl flex items-center gap-3 text-xs shadow-lg shadow-black/30 w-full sm:w-auto">
           <span className="text-slate-400 flex items-center gap-2">
             Claimed Seat:{" "}
             <Link
@@ -426,9 +460,12 @@ function RouteComponent() {
           <div className="flex items-center gap-2.5">
             <span className="text-xl">⚔️</span>
             <div className="flex flex-col">
-              <span className="font-extrabold text-xs text-amber-400 uppercase tracking-wider">Active 1v1 Battle!</span>
+              <span className="font-extrabold text-xs text-amber-400 uppercase tracking-wider">
+                Active 1v1 Battle!
+              </span>
               <span className="text-[10px] text-slate-400">
-                You have an ongoing match against <strong className="text-slate-200">{opponentName}</strong>.
+                You have an ongoing match against{" "}
+                <strong className="text-slate-200">{opponentName}</strong>.
               </span>
             </div>
           </div>
@@ -441,7 +478,11 @@ function RouteComponent() {
             </Button>
             <Button
               onClick={() => {
-                if (confirm("Are you sure you want to forfeit this match and accept defeat?")) {
+                if (
+                  confirm(
+                    "Are you sure you want to forfeit this match and accept defeat?"
+                  )
+                ) {
                   sendMessage({
                     type: "update_arena_state",
                     uuid: myUuid,
@@ -474,12 +515,17 @@ function RouteComponent() {
 
         {/* 🏆 Cumulative Team Tournament Standings Scoreboard */}
         {(() => {
-          const teamScores = (roomStore.value?.data as any)?.team_scores || { boy: 0, girl: 0 }
+          const teamScores = (roomStore.value?.data as any)?.team_scores || {
+            boy: 0,
+            girl: 0,
+          }
           const boyScore = teamScores.boy || 0
           const girlScore = teamScores.girl || 0
           const totalPoints = boyScore + girlScore
-          const boyPercent = totalPoints > 0 ? (boyScore / totalPoints) * 100 : 50
-          const girlPercent = totalPoints > 0 ? (girlScore / totalPoints) * 100 : 50
+          const boyPercent =
+            totalPoints > 0 ? (boyScore / totalPoints) * 100 : 50
+          const girlPercent =
+            totalPoints > 0 ? (girlScore / totalPoints) * 100 : 50
 
           return (
             <div className="bg-slate-950/80 border border-slate-850 rounded-2xl p-4.5 shadow-inner space-y-3 relative overflow-hidden text-left font-sans">
@@ -494,23 +540,33 @@ function RouteComponent() {
                   1 Pt / Win
                 </span>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 {/* Team Boy */}
                 <div className="flex flex-col items-center bg-sky-950/20 border border-sky-900/30 p-2.5 rounded-xl text-center space-y-1">
                   <span className="text-xl">👦</span>
-                  <span className="text-[9px] font-black uppercase text-sky-400 tracking-wider">Team Mateus</span>
+                  <span className="text-[9px] font-black uppercase text-sky-400 tracking-wider">
+                    Team Mateus
+                  </span>
                   <span className="text-2xl font-black text-slate-100 font-mono tracking-tight drop-shadow-[0_0_12px_rgba(56,189,248,0.3)]">
-                    {boyScore} <span className="text-[10px] text-slate-500 font-extrabold font-sans">PTS</span>
+                    {boyScore}{" "}
+                    <span className="text-[10px] text-slate-500 font-extrabold font-sans">
+                      PTS
+                    </span>
                   </span>
                 </div>
 
                 {/* Team Girl */}
                 <div className="flex flex-col items-center bg-pink-950/20 border border-pink-900/30 p-2.5 rounded-xl text-center space-y-1">
                   <span className="text-xl">👧</span>
-                  <span className="text-[9px] font-black uppercase text-pink-400 tracking-wider">Team Meira</span>
+                  <span className="text-[9px] font-black uppercase text-pink-400 tracking-wider">
+                    Team Meira
+                  </span>
                   <span className="text-2xl font-black text-slate-100 font-mono tracking-tight drop-shadow-[0_0_12px_rgba(244,63,94,0.3)]">
-                    {girlScore} <span className="text-[10px] text-slate-500 font-extrabold font-sans">PTS</span>
+                    {girlScore}{" "}
+                    <span className="text-[10px] text-slate-500 font-extrabold font-sans">
+                      PTS
+                    </span>
                   </span>
                 </div>
               </div>
@@ -518,12 +574,12 @@ function RouteComponent() {
               {/* Progress VS bar */}
               <div className="space-y-1 pt-1">
                 <div className="h-2 w-full bg-slate-900 border border-slate-850 rounded-full overflow-hidden flex">
-                  <div 
-                    className="h-full bg-gradient-to-r from-sky-500 to-sky-400 transition-all duration-500" 
+                  <div
+                    className="h-full bg-gradient-to-r from-sky-500 to-sky-400 transition-all duration-500"
                     style={{ width: `${boyPercent}%` }}
                   />
-                  <div 
-                    className="h-full bg-gradient-to-r from-pink-400 to-pink-500 transition-all duration-500" 
+                  <div
+                    className="h-full bg-gradient-to-r from-pink-400 to-pink-500 transition-all duration-500"
                     style={{ width: `${girlPercent}%` }}
                   />
                 </div>
@@ -563,106 +619,128 @@ function RouteComponent() {
           if (!isAdmin && !isSeated) {
             return null
           }
-          
+
           const p1 = arena?.player1
           const p2 = arena?.player2
-          
-          const p1Player = roomStore.value?.players.find((p) => p.uuid === p1?.uuid)
-          const p1Team = p1Player?.team || ""
-          
-          const p2Player = roomStore.value?.players.find((p) => p.uuid === p2?.uuid)
-          const p2Team = p2Player?.team || ""
-          
-          const availablePlayers = (roomStore.value?.players || []).filter(
-            (p) => p.uuid !== p1?.uuid && p.uuid !== p2?.uuid && p.uuid && p.name
+
+          const p1Player = roomStore.value?.players.find(
+            (p) => p.uuid === p1?.uuid
           )
-          
+          const p1Team = p1Player?.team || ""
+
+          const p2Player = roomStore.value?.players.find(
+            (p) => p.uuid === p2?.uuid
+          )
+          const p2Team = p2Player?.team || ""
+
+          const availablePlayers = (roomStore.value?.players || []).filter(
+            (p) =>
+              p.uuid !== p1?.uuid && p.uuid !== p2?.uuid && p.uuid && p.name
+          )
+
           return (
             <div className="bg-slate-950/60 border border-slate-850 rounded-2xl p-4 shadow-2xl relative overflow-hidden space-y-4 text-left">
               <div className="flex items-center justify-between border-b border-slate-850/60 pb-2.5">
                 <div className="flex items-center gap-2">
-                  <Swords className={`w-4 h-4 ${arena?.status === "active" ? "text-rose-400 animate-pulse animate-bounce" : "text-slate-400"}`} />
+                  <Swords
+                    className={`w-4 h-4 ${arena?.status === "active" ? "text-rose-400 animate-pulse animate-bounce" : "text-slate-400"}`}
+                  />
                   <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-200">
                     1v1 Arena Match
                   </h3>
                 </div>
                 <div className="flex items-center gap-2">
-                  {isAdmin && (arena?.status === "idle" || arena?.status === "preparing") && (
-                    <button
-                      onClick={() => sendMessage({ type: "swap_arena_slots" })}
-                      className="px-2 py-0.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[8px] font-black uppercase text-slate-300 hover:text-white hover:border-sky-500/40 rounded-md transition-all cursor-pointer flex items-center gap-1 active:scale-95 shadow-md"
-                      title="Swap Slot 1 & Slot 2 Players"
-                      type="button"
-                    >
-                      ⇄ Swap Seats
-                    </button>
-                  )}
-                  <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider ${
-                    arena?.status === "active" 
-                      ? "bg-rose-500/10 text-rose-400 border border-rose-500/20 animate-pulse" 
-                      : arena?.status === "completed" 
-                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
-                      : arena?.status === "preparing" 
-                      ? "bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse"
-                      : "bg-slate-900 text-slate-500 border border-slate-850"
-                  }`}>
+                  {isAdmin &&
+                    (arena?.status === "idle" ||
+                      arena?.status === "preparing") && (
+                      <button
+                        onClick={() =>
+                          sendMessage({ type: "swap_arena_slots" })
+                        }
+                        className="px-2 py-0.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[8px] font-black uppercase text-slate-300 hover:text-white hover:border-sky-500/40 rounded-md transition-all cursor-pointer flex items-center gap-1 active:scale-95 shadow-md"
+                        title="Swap Slot 1 & Slot 2 Players"
+                        type="button"
+                      >
+                        ⇄ Swap Seats
+                      </button>
+                    )}
+                  <span
+                    className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider ${
+                      arena?.status === "active"
+                        ? "bg-rose-500/10 text-rose-400 border border-rose-500/20 animate-pulse"
+                        : arena?.status === "completed"
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          : arena?.status === "preparing"
+                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse"
+                            : "bg-slate-900 text-slate-500 border border-slate-850"
+                    }`}
+                  >
                     {arena?.status || "Idle"}
                   </span>
                 </div>
               </div>
 
-              {isAdmin && (arena?.status === "idle" || arena?.status === "preparing") && (
-                <div className="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-850 text-[10px]">
-                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[8px]">Difficulty</span>
-                  <div className="flex gap-1.5">
-                    {(["easy", "normal", "hard"] as const).map((diff) => (
-                      <button
-                        key={diff}
-                        onClick={() => {
-                          sendMessage({
-                            type: "set_arena_difficulty",
-                            difficulty: diff
-                          })
-                        }}
-                        className={`px-2 py-0.5 rounded-md text-[8px] font-extrabold uppercase transition-all cursor-pointer ${
-                          arena?.difficulty === diff
-                            ? diff === "easy"
-                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                              : diff === "normal"
-                              ? "bg-sky-500/10 text-sky-400 border border-sky-500/30"
-                              : "bg-rose-500/10 text-rose-400 border border-rose-500/30"
-                            : "bg-slate-950 border border-slate-900 text-slate-550 hover:text-slate-400"
-                        }`}
-                      >
-                        {diff}
-                      </button>
-                    ))}
+              {isAdmin &&
+                (arena?.status === "idle" || arena?.status === "preparing") && (
+                  <div className="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-850 text-[10px]">
+                    <span className="text-slate-500 font-bold uppercase tracking-wider text-[8px]">
+                      Difficulty
+                    </span>
+                    <div className="flex gap-1.5">
+                      {(["easy", "normal", "hard"] as const).map((diff) => (
+                        <button
+                          key={diff}
+                          onClick={() => {
+                            sendMessage({
+                              type: "set_arena_difficulty",
+                              difficulty: diff,
+                            })
+                          }}
+                          className={`px-2 py-0.5 rounded-md text-[8px] font-extrabold uppercase transition-all cursor-pointer ${
+                            arena?.difficulty === diff
+                              ? diff === "easy"
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                                : diff === "normal"
+                                  ? "bg-sky-500/10 text-sky-400 border border-sky-500/30"
+                                  : "bg-rose-500/10 text-rose-400 border border-rose-500/30"
+                              : "bg-slate-950 border border-slate-900 text-slate-550 hover:text-slate-400"
+                          }`}
+                        >
+                          {diff}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               <div className="grid grid-cols-1 gap-3">
                 {/* SLOT 1 (LEFT) */}
-                <div className={`p-3 rounded-xl border flex flex-col justify-between space-y-2 relative overflow-hidden transition-all ${
-                  p1?.invite_status === "accepted"
-                    ? p1.ready 
-                      ? "bg-emerald-950/15 border-emerald-500/30"
-                      : "bg-sky-950/15 border-sky-500/30"
-                    : p1?.invite_status === "invited"
-                    ? "bg-amber-950/15 border-amber-500/30 border-dashed animate-pulse"
-                    : "bg-slate-900/30 border-slate-850 border-dashed"
-                }`}>
+                <div
+                  className={`p-3 rounded-xl border flex flex-col justify-between space-y-2 relative overflow-hidden transition-all ${
+                    p1?.invite_status === "accepted"
+                      ? p1.ready
+                        ? "bg-emerald-950/15 border-emerald-500/30"
+                        : "bg-sky-950/15 border-sky-500/30"
+                      : p1?.invite_status === "invited"
+                        ? "bg-amber-950/15 border-amber-500/30 border-dashed animate-pulse"
+                        : "bg-slate-900/30 border-slate-850 border-dashed"
+                  }`}
+                >
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-[8px] font-black uppercase tracking-widest text-sky-400">Slot 1 (Team Mateus 👦)</span>
+                      <span className="text-[8px] font-black uppercase tracking-widest text-sky-400">
+                        Slot 1 (Team Mateus 👦)
+                      </span>
                       <h4 className="text-xs font-extrabold text-slate-200 truncate mt-0.5 max-w-[150px] flex items-center gap-1.5">
                         {p1?.name || "Unoccupied"}
                         {p1Team && (
-                          <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider ${
-                            p1Team === "boy" 
-                              ? "bg-sky-500/10 text-sky-400 border border-sky-500/20" 
-                              : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                          }`}>
+                          <span
+                            className={`text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider ${
+                              p1Team === "boy"
+                                ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                                : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                            }`}
+                          >
                             {p1Team === "boy" ? "👦 Mateus" : "👧 Meira"}
                           </span>
                         )}
@@ -670,14 +748,18 @@ function RouteComponent() {
                       <p className="text-[9px] font-semibold mt-0.5">
                         {p1?.invite_status === "accepted" ? (
                           p1.ready ? (
-                            <span className="text-emerald-400 flex items-center gap-1 font-bold">● Ready</span>
+                            <span className="text-emerald-400 flex items-center gap-1 font-bold">
+                              ● Ready
+                            </span>
                           ) : (
                             <span className="text-sky-400 flex items-center gap-1 font-bold">
                               ● Seated
                             </span>
                           )
                         ) : p1?.invite_status === "invited" ? (
-                          <span className="text-amber-400 animate-pulse">● Invited...</span>
+                          <span className="text-amber-400 animate-pulse">
+                            ● Invited...
+                          </span>
                         ) : (
                           <span className="text-slate-600">Empty Seat</span>
                         )}
@@ -689,7 +771,7 @@ function RouteComponent() {
                         onClick={() => {
                           sendMessage({
                             type: "kick_from_arena",
-                            slot: "player1"
+                            slot: "player1",
                           })
                         }}
                         className="p-1 bg-slate-950 hover:bg-rose-950/40 text-slate-500 hover:text-rose-400 border border-slate-850 hover:border-rose-500/30 rounded-lg transition-all cursor-pointer text-[10px]"
@@ -710,25 +792,30 @@ function RouteComponent() {
                                 type: "invite_to_arena",
                                 slot: "player1",
                                 target_uuid: e.target.value,
-                                difficulty: arena?.difficulty || "normal"
+                                difficulty: arena?.difficulty || "normal",
                               })
                               e.target.value = ""
                             }
                           }}
                           className="w-full h-8 bg-slate-950 border border-slate-850 text-[10px] font-extrabold uppercase rounded-lg px-2 text-slate-400 hover:border-sky-500/30 transition-all outline-hidden cursor-pointer"
                         >
-                          <option value="">+ Seat Player 1 (Mateus Slot)...</option>
+                          <option value="">
+                            + Seat Player 1 (Mateus Slot)...
+                          </option>
                           {availablePlayers.map((player) => {
                             const isBoy = player.team === "boy"
                             return (
                               <option key={player.uuid} value={player.uuid}>
-                                {player.name || "Anonymous"} ({isBoy ? "👦 Mateus" : "👧 Meira"})
+                                {player.name || "Anonymous"} (
+                                {isBoy ? "👦 Mateus" : "👧 Meira"})
                               </option>
                             )
                           })}
                         </select>
                       ) : (
-                        <p className="text-[8px] text-slate-600 italic">No available players</p>
+                        <p className="text-[8px] text-slate-600 italic">
+                          No available players
+                        </p>
                       )}
                     </div>
                   )}
@@ -739,7 +826,7 @@ function RouteComponent() {
                         sendMessage({
                           type: "set_arena_ready",
                           uuid: myUuid,
-                          ready: !p1.ready
+                          ready: !p1.ready,
                         })
                       }}
                       className={`w-full h-7 font-black uppercase text-[9px] rounded-lg tracking-wider cursor-pointer shadow-md transition-all active:scale-95 ${
@@ -754,26 +841,32 @@ function RouteComponent() {
                 </div>
 
                 {/* SLOT 2 (RIGHT) */}
-                <div className={`p-3 rounded-xl border flex flex-col justify-between space-y-2 relative overflow-hidden transition-all ${
-                  p2?.invite_status === "accepted"
-                    ? p2.ready 
-                      ? "bg-emerald-950/15 border-emerald-500/30"
-                      : "bg-pink-950/15 border-pink-500/30"
-                    : p2?.invite_status === "invited"
-                    ? "bg-amber-950/15 border-amber-500/30 border-dashed animate-pulse"
-                    : "bg-slate-900/30 border-slate-850 border-dashed"
-                }`}>
+                <div
+                  className={`p-3 rounded-xl border flex flex-col justify-between space-y-2 relative overflow-hidden transition-all ${
+                    p2?.invite_status === "accepted"
+                      ? p2.ready
+                        ? "bg-emerald-950/15 border-emerald-500/30"
+                        : "bg-pink-950/15 border-pink-500/30"
+                      : p2?.invite_status === "invited"
+                        ? "bg-amber-950/15 border-amber-500/30 border-dashed animate-pulse"
+                        : "bg-slate-900/30 border-slate-850 border-dashed"
+                  }`}
+                >
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-[8px] font-black uppercase tracking-widest text-pink-400">Slot 2 (Team Meira 👧)</span>
+                      <span className="text-[8px] font-black uppercase tracking-widest text-pink-400">
+                        Slot 2 (Team Meira 👧)
+                      </span>
                       <h4 className="text-xs font-extrabold text-slate-200 truncate mt-0.5 max-w-[150px] flex items-center gap-1.5">
                         {p2?.name || "Unoccupied"}
                         {p2Team && (
-                          <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider ${
-                            p2Team === "boy" 
-                              ? "bg-sky-500/10 text-sky-400 border border-sky-500/20" 
-                              : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                          }`}>
+                          <span
+                            className={`text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider ${
+                              p2Team === "boy"
+                                ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                                : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                            }`}
+                          >
                             {p2Team === "boy" ? "👦 Mateus" : "👧 Meira"}
                           </span>
                         )}
@@ -781,14 +874,18 @@ function RouteComponent() {
                       <p className="text-[9px] font-semibold mt-0.5">
                         {p2?.invite_status === "accepted" ? (
                           p2.ready ? (
-                            <span className="text-emerald-400 flex items-center gap-1 font-bold">● Ready</span>
+                            <span className="text-emerald-400 flex items-center gap-1 font-bold">
+                              ● Ready
+                            </span>
                           ) : (
                             <span className="text-pink-400 flex items-center gap-1 font-bold">
                               ● Seated
                             </span>
                           )
                         ) : p2?.invite_status === "invited" ? (
-                          <span className="text-amber-400 animate-pulse">● Invited...</span>
+                          <span className="text-amber-400 animate-pulse">
+                            ● Invited...
+                          </span>
                         ) : (
                           <span className="text-slate-600">Empty Seat</span>
                         )}
@@ -800,7 +897,7 @@ function RouteComponent() {
                         onClick={() => {
                           sendMessage({
                             type: "kick_from_arena",
-                            slot: "player2"
+                            slot: "player2",
                           })
                         }}
                         className="p-1 bg-slate-950 hover:bg-rose-950/40 text-slate-500 hover:text-rose-400 border border-slate-850 hover:border-rose-500/30 rounded-lg transition-all cursor-pointer text-[10px]"
@@ -821,25 +918,30 @@ function RouteComponent() {
                                 type: "invite_to_arena",
                                 slot: "player2",
                                 target_uuid: e.target.value,
-                                difficulty: arena?.difficulty || "normal"
+                                difficulty: arena?.difficulty || "normal",
                               })
                               e.target.value = ""
                             }
                           }}
                           className="w-full h-8 bg-slate-950 border border-slate-850 text-[10px] font-extrabold uppercase rounded-lg px-2 text-slate-400 hover:border-pink-500/30 transition-all outline-hidden cursor-pointer"
                         >
-                          <option value="">+ Seat Player 2 (Meira Slot)...</option>
+                          <option value="">
+                            + Seat Player 2 (Meira Slot)...
+                          </option>
                           {availablePlayers.map((player) => {
                             const isGirl = player.team === "girl"
                             return (
                               <option key={player.uuid} value={player.uuid}>
-                                {player.name || "Anonymous"} ({isGirl ? "👧 Meira" : "👦 Mateus"})
+                                {player.name || "Anonymous"} (
+                                {isGirl ? "👧 Meira" : "👦 Mateus"})
                               </option>
                             )
                           })}
                         </select>
                       ) : (
-                        <p className="text-[8px] text-slate-600 italic">No available players</p>
+                        <p className="text-[8px] text-slate-600 italic">
+                          No available players
+                        </p>
                       )}
                     </div>
                   )}
@@ -850,7 +952,7 @@ function RouteComponent() {
                         sendMessage({
                           type: "set_arena_ready",
                           uuid: myUuid,
-                          ready: !p2.ready
+                          ready: !p2.ready,
                         })
                       }}
                       className={`w-full h-7 font-black uppercase text-[9px] rounded-lg tracking-wider cursor-pointer shadow-md transition-all active:scale-95 ${
@@ -869,7 +971,7 @@ function RouteComponent() {
                 <Button
                   onClick={() => {
                     sendMessage({
-                      type: "reset_arena"
+                      type: "reset_arena",
                     })
                   }}
                   className="w-full h-8.5 bg-linear-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-extrabold uppercase text-[9px] rounded-xl shadow-lg transition-all active:scale-95 cursor-pointer select-none"
@@ -1002,7 +1104,8 @@ function RouteComponent() {
               <Dialog open={isQrOpen} onOpenChange={setIsQrOpen}>
                 <DialogTrigger asChild>
                   <Button className="h-9.5 bg-slate-950 border border-slate-850 hover:bg-slate-900 hover:border-cyan-500/30 text-slate-300 text-[10px] font-extrabold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-md active:scale-95">
-                    <QrCode className="w-3.5 h-3.5 text-cyan-400" /> Show QR Code
+                    <QrCode className="w-3.5 h-3.5 text-cyan-400" /> Show QR
+                    Code
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-slate-900 border border-slate-850 text-slate-100 max-w-[calc(100%-2rem)] sm:max-w-sm rounded-2xl shadow-2xl p-6 select-none flex flex-col items-center justify-center text-center gap-4">
@@ -1015,7 +1118,8 @@ function RouteComponent() {
                         Scan to Join Duel!
                       </DialogTitle>
                       <DialogDescription className="text-slate-400 text-xs mt-0.5 text-center w-full">
-                        Point a smartphone camera at this QR code to join the game lobby instantly.
+                        Point a smartphone camera at this QR code to join the
+                        game lobby instantly.
                       </DialogDescription>
                     </div>
 
@@ -1024,13 +1128,19 @@ function RouteComponent() {
                       <QRCode
                         value={shareUrl}
                         size={168}
-                        style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                        style={{
+                          height: "auto",
+                          maxWidth: "100%",
+                          width: "100%",
+                        }}
                         viewBox={`0 0 168 168`}
                       />
                     </div>
 
                     <div className="bg-slate-950/80 border border-slate-850 p-2.5 rounded-xl font-mono text-[9px] text-slate-400 select-all flex items-center justify-between gap-2 overflow-hidden w-full shrink-0">
-                      <span className="truncate min-w-0 flex-1 text-left">{shareUrl}</span>
+                      <span className="truncate min-w-0 flex-1 text-left">
+                        {shareUrl}
+                      </span>
                       <button
                         onClick={handleCopyLink}
                         className="p-1 hover:text-white transition-colors cursor-pointer text-slate-500 shrink-0"
