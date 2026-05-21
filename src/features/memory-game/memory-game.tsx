@@ -107,7 +107,6 @@ export function MemoryGame({
   const [show, setShow] = useState<boolean[]>(Array(n * 2).fill(false))
 
   const [paused, setPaused] = useState(true)
-  const [hasEnded, setHasEnded] = useState(true)
   const [isGameComplete, setIsGameComplete] = useState(false)
   const [selected, setSelected] = useState<number[]>([])
   const [score, setScore] = useState<number | null>(0)
@@ -131,7 +130,6 @@ export function MemoryGame({
   const startWithCountdown = async () => {
     setPaused(true)
     setIsGameComplete(false)
-    setHasEnded(false)
     setCounter(0)
     setScore(0)
     setSelected([])
@@ -198,7 +196,6 @@ export function MemoryGame({
       }
       if (show.length > 0 && show.every((el) => el)) {
         setPaused(true)
-        setHasEnded(true)
         // Brief pause for matched-cards animation to settle
         await wait(800)
         setIsGameComplete(true)
