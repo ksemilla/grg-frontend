@@ -88,6 +88,9 @@ export function useRoomSocket(
           case "admin":
             roomStore.setIsAdmin(true)
             break
+          case "demote":
+            roomStore.setIsAdmin(false)
+            break
           case "room.update":
             roomStore.setValue(event.room)
             break

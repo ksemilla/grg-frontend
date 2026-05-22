@@ -11,7 +11,7 @@ import { useRoomStore } from "@/stores/roomStore"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
-import { ShieldCheck, RefreshCw, LogOut, Ban, Users, Search, KeyRound } from "lucide-react"
+import { ShieldCheck, RefreshCw, LogOut, Ban, Users, Search, KeyRound, Swords, Play } from "lucide-react"
 
 export const Route = createFileRoute("/room/$roomUuid/admin/")({
   component: RouteComponent,
@@ -234,6 +234,21 @@ function RouteComponent() {
   const roomStore = useRoomStore()
   const [searchQuery, setSearchQuery] = useState("")
   const myUuid = localStorage.getItem("uuid")
+
+  const [p1Search, setP1Search] = useState("")
+  const [p1SearchFocused, setP1SearchFocused] = useState(false)
+  const [p2Search, setP2Search] = useState("")
+  const [p2SearchFocused, setP2SearchFocused] = useState(false)
+
+  const teamScores = (roomStore.value?.data as any)?.team_scores || { boy: 0, girl: 0 }
+  const [boyVal, setBoyVal] = useState(teamScores.boy || 0)
+  const [girlVal, setGirlVal] = useState(teamScores.girl || 0)
+
+  // Sync state when DB updates
+  useEffect(() => {
+    setBoyVal(teamScores.boy || 0)
+    setGirlVal(teamScores.girl || 0)
+  }, [teamScores.boy, teamScores.girl])
   
   const myPlayerIsAdmin = roomStore.value?.players?.find(p => p.uuid === myUuid)?.is_admin ?? false
   const isAuthorizedAdmin = roomStore.isAdmin || myPlayerIsAdmin
@@ -342,6 +357,404 @@ function RouteComponent() {
             </Link>
           </div>
         </div>
+
+        {/* Cumulative Tournament Standings Editor */}
+        <div className="bg-slate-950/40 border border-slate-850 p-4.5 rounded-xl space-y-3 text-left">
+          <h2 className="text-xs uppercase font-extrabold tracking-wider text-slate-400 flex items-center gap-1.5 border-b border-slate-850/60 pb-2">
+            🏆 Tournament Standings Editor
+          </h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-sky-400">Team Mateus (Boy)</label>
+              <Input
+                type="number"
+                value={boyVal}
+                onChange={(e) => setBoyVal(Number(e.target.value))}
+                className="bg-slate-950 border-slate-850 text-slate-100 text-xs font-mono font-semibold h-8.5"
+                min={0}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-pink-400">Team Meira (Girl)</label>
+              <Input
+                type="number"
+                value={girlVal}
+                onChange={(e) => setGirlVal(Number(e.target.value))}
+                className="bg-slate-950 border-slate-850 text-slate-100 text-xs font-mono font-semibold h-8.5"
+                min={0}
+              />
+            </div>
+          </div>
+          <Button
+            onClick={() => {
+              sendMessage({
+                type: "set_team_scores",
+                boy: Number(boyVal),
+                girl: Number(girlVal),
+              })
+            }}
+            className="w-full h-8 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-[9px] uppercase tracking-wider rounded-lg shadow-md active:scale-95 transition-all cursor-pointer"
+          >
+            Update Standings ⚡
+          </Button>
+        </div>
+
+        {/* ⚔️ Permanent 1v1 Arena Board Dashboard */}
+        {(() => {
+          const arena = (roomStore.value?.data as any)?.arena
+          const p1 = arena?.player1
+          const p2 = arena?.player2
+
+          const p1Player = roomStore.value?.players.find((p) => p.uuid === p1?.uuid)
+          const p1Team = p1Player?.team || ""
+
+          const p2Player = roomStore.value?.players.find((p) => p.uuid === p2?.uuid)
+          const p2Team = p2Player?.team || ""
+
+          const availablePlayers = (roomStore.value?.players || []).filter(
+            (p) => p.uuid !== p1?.uuid && p.uuid !== p2?.uuid && p.uuid && p.name
+          )
+
+          const filteredAvailable1 = availablePlayers.filter((p) =>
+            (p.name || "").toLowerCase().includes(p1Search.toLowerCase())
+          )
+
+          const filteredAvailable2 = availablePlayers.filter((p) =>
+            (p.name || "").toLowerCase().includes(p2Search.toLowerCase())
+          )
+
+          return (
+            <div className="bg-slate-950/60 border border-slate-850 rounded-2xl p-4.5 shadow-2xl relative overflow-visible space-y-4 text-left">
+              <div className="flex items-center justify-between border-b border-slate-850/60 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <Swords
+                    className={`w-4 h-4 ${arena?.status === "active" ? "text-rose-405 animate-pulse" : "text-slate-400"}`}
+                  />
+                  <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-200">
+                    1v1 Arena Match Seating
+                  </h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  {(arena?.status === "idle" || arena?.status === "preparing") && (
+                    <button
+                      onClick={() => sendMessage({ type: "swap_arena_slots" })}
+                      className="px-2 py-0.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[8px] font-black uppercase text-slate-350 hover:text-white hover:border-sky-500/40 rounded-md transition-all cursor-pointer flex items-center gap-1 active:scale-95 shadow-md"
+                      title="Swap Slot 1 & Slot 2 Players"
+                      type="button"
+                    >
+                      ⇄ Swap Seats
+                    </button>
+                  )}
+                  <span
+                    className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider ${
+                      arena?.status === "active"
+                        ? "bg-rose-500/10 text-rose-400 border border-rose-500/20 animate-pulse"
+                        : arena?.status === "completed"
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          : arena?.status === "preparing"
+                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse"
+                            : "bg-slate-900 text-slate-500 border border-slate-850"
+                    }`}
+                  >
+                    {arena?.status || "Idle"}
+                  </span>
+                </div>
+              </div>
+
+              {(arena?.status === "idle" || arena?.status === "preparing") && (
+                <div className="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-850 text-[10px]">
+                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[8px]">
+                    Difficulty Mode
+                  </span>
+                  <div className="flex gap-1.5">
+                    {(["easy", "normal", "hard"] as const).map((diff) => (
+                      <button
+                        key={diff}
+                        onClick={() => {
+                          sendMessage({
+                            type: "set_arena_difficulty",
+                            difficulty: diff,
+                          })
+                        }}
+                        className={`px-2 py-0.5 rounded-md text-[8px] font-extrabold uppercase transition-all cursor-pointer ${
+                          arena?.difficulty === diff
+                            ? diff === "easy"
+                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+                              : diff === "normal"
+                                ? "bg-sky-500/10 text-sky-400 border border-sky-500/30"
+                                : "bg-rose-500/10 text-rose-400 border border-rose-500/30"
+                            : "bg-slate-950 border border-slate-900 text-slate-550 hover:text-slate-400"
+                        }`}
+                      >
+                        {diff}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 gap-3">
+                {/* SLOT 1 (LEFT) - Team Mateus */}
+                <div
+                  className={`p-3 rounded-xl border flex flex-col justify-between space-y-2.5 relative overflow-visible transition-all ${
+                    p1?.invite_status === "accepted"
+                      ? p1.ready
+                        ? "bg-emerald-950/15 border-emerald-500/30"
+                        : "bg-sky-950/15 border-sky-500/30"
+                      : p1?.invite_status === "invited"
+                        ? "bg-amber-950/15 border-amber-500/30 border-dashed animate-pulse"
+                        : "bg-slate-900/30 border-slate-850 border-dashed"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-[8px] font-black uppercase tracking-widest text-sky-400">
+                        Slot 1 (Team Mateus 👦)
+                      </span>
+                      <h4 className="text-xs font-extrabold text-slate-200 truncate mt-0.5 max-w-[150px] flex items-center gap-1.5">
+                        {p1?.name || "Unoccupied"}
+                        {p1Team && (
+                          <span
+                            className={`text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider ${
+                              p1Team === "boy"
+                                ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                                : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                            }`}
+                          >
+                            {p1Team === "boy" ? "👦 Mateus" : "👧 Meira"}
+                          </span>
+                        )}
+                      </h4>
+                      <p className="text-[9px] font-semibold mt-0.5">
+                        {p1?.invite_status === "accepted" ? (
+                          p1.ready ? (
+                            <span className="text-emerald-400 flex items-center gap-1 font-bold">
+                              ● Ready
+                            </span>
+                          ) : (
+                            <span className="text-sky-400 flex items-center gap-1 font-bold">
+                              ● Seated
+                            </span>
+                          )
+                        ) : p1?.invite_status === "invited" ? (
+                          <span className="text-amber-400 animate-pulse">
+                            ● Invited...
+                          </span>
+                        ) : (
+                          <span className="text-slate-600">Empty Seat</span>
+                        )}
+                      </p>
+                    </div>
+
+                    {p1?.uuid && (
+                      <button
+                        onClick={() => {
+                          sendMessage({
+                            type: "kick_from_arena",
+                            slot: "player1",
+                          })
+                        }}
+                        className="p-1 bg-slate-950 hover:bg-rose-950/40 text-slate-500 hover:text-rose-400 border border-slate-850 hover:border-rose-500/30 rounded-lg transition-all cursor-pointer text-[10px]"
+                        title="Kick Player"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {!p1?.uuid && (
+                    <div className="relative">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-500" />
+                        <Input
+                          placeholder="Search player to seat..."
+                          value={p1Search}
+                          onChange={(e) => {
+                            setP1Search(e.target.value)
+                            setP1SearchFocused(true)
+                          }}
+                          onFocus={() => setP1SearchFocused(true)}
+                          onBlur={() => setTimeout(() => setP1SearchFocused(false), 200)}
+                          className="bg-slate-950 border border-slate-850 text-slate-100 placeholder-slate-600 text-xs font-semibold pl-8 h-8.5 rounded-lg focus-visible:ring-sky-500/30"
+                        />
+                      </div>
+
+                      {p1SearchFocused && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-slate-950 border border-slate-850 rounded-xl shadow-2xl max-h-36 overflow-y-auto z-50 divide-y divide-slate-900/60 scrollbar-thin">
+                          {filteredAvailable1.length > 0 ? (
+                            filteredAvailable1.map((player) => (
+                              <button
+                                key={player.uuid}
+                                onMouseDown={() => {
+                                  sendMessage({
+                                    type: "invite_to_arena",
+                                    slot: "player1",
+                                    target_uuid: player.uuid,
+                                    difficulty: arena?.difficulty || "normal",
+                                  })
+                                  setP1Search("")
+                                  setP1SearchFocused(false)
+                                }}
+                                className="w-full text-left px-3 py-2 hover:bg-violet-600/10 hover:text-violet-400 transition-colors text-[9px] font-black uppercase text-slate-350 flex justify-between items-center cursor-pointer"
+                              >
+                                <span>{player.name || "Anonymous"}</span>
+                                <span className="text-[7.5px] opacity-60">
+                                  {player.team === "boy" ? "👦 Mateus" : player.team === "girl" ? "👧 Meira" : "Solo"}
+                                </span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-3 py-2 text-[8px] text-slate-600 italic">No available players found</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* SLOT 2 (RIGHT) - Team Meira */}
+                <div
+                  className={`p-3 rounded-xl border flex flex-col justify-between space-y-2.5 relative overflow-visible transition-all ${
+                    p2?.invite_status === "accepted"
+                      ? p2.ready
+                        ? "bg-emerald-950/15 border-emerald-500/30"
+                        : "bg-pink-950/15 border-pink-500/30"
+                      : p2?.invite_status === "invited"
+                        ? "bg-amber-950/15 border-amber-500/30 border-dashed animate-pulse"
+                        : "bg-slate-900/30 border-slate-850 border-dashed"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-[8px] font-black uppercase tracking-widest text-pink-400">
+                        Slot 2 (Team Meira 👧)
+                      </span>
+                      <h4 className="text-xs font-extrabold text-slate-200 truncate mt-0.5 max-w-[150px] flex items-center gap-1.5">
+                        {p2?.name || "Unoccupied"}
+                        {p2Team && (
+                          <span
+                            className={`text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider ${
+                              p2Team === "boy"
+                                ? "bg-sky-500/10 text-sky-400 border border-sky-500/20"
+                                : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                            }`}
+                          >
+                            {p2Team === "boy" ? "👦 Mateus" : "👧 Meira"}
+                          </span>
+                        )}
+                      </h4>
+                      <p className="text-[9px] font-semibold mt-0.5">
+                        {p2?.invite_status === "accepted" ? (
+                          p2.ready ? (
+                            <span className="text-emerald-400 flex items-center gap-1 font-bold">
+                              ● Ready
+                            </span>
+                          ) : (
+                            <span className="text-pink-400 flex items-center gap-1 font-bold">
+                              ● Seated
+                            </span>
+                          )
+                        ) : p2?.invite_status === "invited" ? (
+                          <span className="text-amber-400 animate-pulse">
+                            ● Invited...
+                          </span>
+                        ) : (
+                          <span className="text-slate-600">Empty Seat</span>
+                        )}
+                      </p>
+                    </div>
+
+                    {p2?.uuid && (
+                      <button
+                        onClick={() => {
+                          sendMessage({
+                            type: "kick_from_arena",
+                            slot: "player2",
+                          })
+                        }}
+                        className="p-1 bg-slate-950 hover:bg-rose-950/40 text-slate-500 hover:text-rose-400 border border-slate-850 hover:border-rose-500/30 rounded-lg transition-all cursor-pointer text-[10px]"
+                        title="Kick Player"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {!p2?.uuid && (
+                    <div className="relative">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-500" />
+                        <Input
+                          placeholder="Search player to seat..."
+                          value={p2Search}
+                          onChange={(e) => {
+                            setP2Search(e.target.value)
+                            setP2SearchFocused(true)
+                          }}
+                          onFocus={() => setP2SearchFocused(true)}
+                          onBlur={() => setTimeout(() => setP2SearchFocused(false), 200)}
+                          className="bg-slate-950 border-slate-850 text-slate-100 placeholder-slate-600 text-xs font-semibold pl-8 h-8.5 rounded-lg focus-visible:ring-pink-500/30"
+                        />
+                      </div>
+
+                      {p2SearchFocused && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-slate-950 border border-slate-850 rounded-xl shadow-2xl max-h-36 overflow-y-auto z-50 divide-y divide-slate-900/60 scrollbar-thin">
+                          {filteredAvailable2.length > 0 ? (
+                            filteredAvailable2.map((player) => (
+                              <button
+                                key={player.uuid}
+                                onMouseDown={() => {
+                                  sendMessage({
+                                    type: "invite_to_arena",
+                                    slot: "player2",
+                                    target_uuid: player.uuid,
+                                    difficulty: arena?.difficulty || "normal",
+                                  })
+                                  setP2Search("")
+                                  setP2SearchFocused(false)
+                                }}
+                                className="w-full text-left px-3 py-2 hover:bg-violet-650/10 hover:text-violet-400 transition-colors text-[9px] font-black uppercase text-slate-350 flex justify-between items-center cursor-pointer"
+                              >
+                                <span>{player.name || "Anonymous"}</span>
+                                <span className="text-[7.5px] opacity-60">
+                                  {player.team === "boy" ? "👦 Mateus" : player.team === "girl" ? "👧 Meira" : "Solo"}
+                                </span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-3 py-2 text-[8px] text-slate-600 italic">No available players found</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Start 1v1 Arena Battle Button for Host Admins */}
+              {p1?.uuid && p2?.uuid && arena?.status !== "active" && (
+                <Button
+                  onClick={() => sendMessage({ type: "start_arena_battle" })}
+                  className="w-full h-9 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-extrabold text-[9px] uppercase tracking-wider rounded-xl shadow-lg shadow-rose-600/10 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Play className="w-3.5 h-3.5 fill-white" />
+                  Commence 1v1 Arena Battle ⚔️
+                </Button>
+              )}
+
+              {/* Reset Arena Match State (Emergency/Idle state reset) */}
+              {arena?.status === "completed" && (
+                <Button
+                  onClick={() => sendMessage({ type: "reset_arena" })}
+                  className="w-full h-8.5 bg-slate-950 border border-slate-850 hover:bg-slate-900 hover:border-violet-500/30 text-slate-300 font-extrabold text-[9px] uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <RefreshCw className="w-3 h-3 text-violet-400" />
+                  Reset Arena to Idle
+                </Button>
+              )}
+            </div>
+          )
+        })()}
 
         <div className="space-y-4">
           <div className="flex flex-col gap-3">
