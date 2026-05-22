@@ -94,6 +94,31 @@ function RouteComponent() {
     }
   }, [activeBattle?.status])
 
+  // Prevent scrolling and double-tap / pinch zooming when playing the game (1v1 battle or single player)
+  useEffect(() => {
+    const isGameActive = isPlaying || (activeBattle && !isMinimized)
+    if (isGameActive) {
+      // 1. Prevent default scrolling and browser touches
+      document.body.style.overflow = "hidden"
+      document.body.style.touchAction = "none"
+
+      // 2. Prevent multi-touch pinching to zoom
+      const preventZoom = (e: TouchEvent) => {
+        if (e.touches.length > 1) {
+          e.preventDefault()
+        }
+      }
+
+      document.addEventListener("touchmove", preventZoom, { passive: false })
+
+      return () => {
+        document.body.style.overflow = ""
+        document.body.style.touchAction = ""
+        document.removeEventListener("touchmove", preventZoom)
+      }
+    }
+  }, [isPlaying, activeBattle, isMinimized])
+
   // Read previous score from local storage
   const [prevScore, setPrevScore] = useState<string | null>(null)
   const [prevTime, setPrevTime] = useState<string | null>(null)

@@ -79,7 +79,7 @@ function RouteComponent() {
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-600/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Back Button */}
-      <div className="absolute top-4 left-4 z-20">
+      <div className="fixed top-4 left-4 z-50">
         <Link
           to="/room/$roomUuid"
           params={{ roomUuid }}
