@@ -11,7 +11,7 @@ import { useRoomStore } from "@/stores/roomStore"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
-import { ShieldCheck, RefreshCw, LogOut, Ban, Users, Search, KeyRound, Swords, Play } from "lucide-react"
+import { ShieldCheck, RefreshCw, LogOut, Ban, Users, Search, KeyRound, Swords, Play, Tv } from "lucide-react"
 
 export const Route = createFileRoute("/room/$roomUuid/admin/")({
   component: RouteComponent,
@@ -752,6 +752,23 @@ function RouteComponent() {
                   Reset Arena to Idle
                 </Button>
               )}
+
+              {/* Spectator Arena Button */}
+              <Link
+                to="/room/$roomUuid/battles/$battleId"
+                params={{ roomUuid, battleId: "arena" }}
+                search={{ code: roomStore.code ?? "" }}
+                className="block w-full"
+                target="_blank"
+              >
+                <Button
+                  variant="outline"
+                  className="w-full h-8.5 bg-slate-950 border-slate-850 hover:bg-slate-900 hover:border-cyan-500/30 text-slate-350 text-[9px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer rounded-xl"
+                >
+                  <Tv className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                  Spectate Live Battle 📺
+                </Button>
+              </Link>
             </div>
           )
         })()}

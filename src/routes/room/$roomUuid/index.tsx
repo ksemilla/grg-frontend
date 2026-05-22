@@ -10,7 +10,6 @@ import {
   Sparkles,
   Swords,
   Gauge,
-  Tv,
   QrCode,
   Copy,
   Check,
@@ -79,9 +78,6 @@ function RouteComponent() {
     : "Opponent"
 
   const isSeated = !!mySlot
-  const myPlayerIsAdmin =
-    roomStore.value?.players.find((p) => p.uuid === myUuid)?.is_admin ?? false
-  const isAdmin = roomStore.isAdmin || myPlayerIsAdmin
 
   const activeBattle = arena?.status === "active" && isSeated ? arena : null
   const completedBattle =
@@ -119,14 +115,9 @@ function RouteComponent() {
     }
   }, [isPlaying, activeBattle, isMinimized])
 
-  // Read previous score from local storage
+  // Track previous run score in memory (do not write to localStorage per instructions)
   const [prevScore, setPrevScore] = useState<string | null>(null)
   const [prevTime, setPrevTime] = useState<string | null>(null)
-
-  useEffect(() => {
-    setPrevScore(localStorage.getItem("prev_score"))
-    setPrevTime(localStorage.getItem("prev_time"))
-  }, [isPlaying])
 
   // Automatically vacate seat and return to lobby 6 seconds after match finishes
   useEffect(() => {
@@ -150,7 +141,7 @@ function RouteComponent() {
           token: roomStore.token,
         },
       })
-    } else if (roomStore.value && !myPlayer && !localStorage.getItem("name")) {
+    } else if (roomStore.value && !myPlayer) {
       navigate({
         to: "/room/$roomUuid/set-name",
         params: {
@@ -163,14 +154,15 @@ function RouteComponent() {
 
   const onScore = (data: { score: number; time: string }) => {
     const { score, time } = data
+    const playerUuid = localStorage.getItem("uuid") || myUuid
 
-    // Save to local storage for menu rendering
-    localStorage.setItem("prev_score", String(score))
-    localStorage.setItem("prev_time", time)
+    // Save in memory for menu rendering
+    setPrevScore(String(score))
+    setPrevTime(time)
 
     sendMessage({
       type: "add_score",
-      uuid: localStorage.getItem("uuid"),
+      uuid: playerUuid,
       score,
       time,
     })
@@ -219,6 +211,94 @@ function RouteComponent() {
 
   const renderGlobalDialogs = () => {
     return null
+  }
+
+  // ⚔️ RENDER WAITING FOR BATTLE SCREEN
+  const myInviteStatus = mySlot ? arena?.[mySlot]?.invite_status : null
+  const isWaitingForBattle =
+    mySlot &&
+    myInviteStatus === "accepted" &&
+    arena?.status !== "active" &&
+    arena?.status !== "completed"
+
+  if (isWaitingForBattle) {
+    const oppSlot = mySlot === "player1" ? "player2" : "player1"
+    const oppPlayer = arena?.[oppSlot]
+    const oppName = oppPlayer?.name || null
+    const oppAccepted = oppPlayer?.invite_status === "accepted"
+
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center px-4 relative overflow-hidden">
+        {/* Background glowing effects */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-rose-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10 text-center space-y-6 animate-in fade-in zoom-in duration-300">
+          {/* Animated pulsing Swords */}
+          <div className="relative inline-flex items-center justify-center p-5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-2xl mb-2">
+            <span className="absolute inset-0 rounded-2xl bg-rose-500/10 animate-ping opacity-75" />
+            <Swords className="w-10 h-10 animate-pulse" />
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-md">
+              Challenge Accepted
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-rose-400 via-fuchsia-400 to-violet-500 bg-clip-text text-transparent">
+              Waiting for Battle...
+            </h1>
+            <p className="text-slate-400 text-xs px-4">
+              You are locked in! Waiting for the host to commence the match. Get ready to match those tiles!
+            </p>
+          </div>
+
+          {/* Opponent Status Details */}
+          <div className="bg-slate-950/60 border border-slate-850 p-4 rounded-xl space-y-2.5 text-left">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Your Slot:</span>
+              <span className="font-extrabold text-slate-300 uppercase tracking-wider text-[10px]">
+                {mySlot === "player1" ? "Slot 1 (👦 Mateus)" : "Slot 2 (👧 Meira)"}
+              </span>
+            </div>
+            <div className="h-px bg-slate-850" />
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Difficulty:</span>
+              <span className="font-extrabold text-amber-400 uppercase tracking-wider text-[10px]">
+                {arena?.difficulty || "normal"}
+              </span>
+            </div>
+            <div className="h-px bg-slate-850" />
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-500 font-bold uppercase tracking-wider text-[9px]">Opponent:</span>
+              <span className="font-extrabold text-slate-300 text-xs">
+                {oppName ? (
+                  <span className={oppAccepted ? "text-emerald-400 flex items-center gap-1" : "text-amber-400 flex items-center gap-1"}>
+                    {oppName} {oppAccepted ? "🟢 Ready" : "🟡 Seated"}
+                  </span>
+                ) : (
+                  <span className="text-slate-500 italic animate-pulse">Waiting for opponent...</span>
+                )}
+              </span>
+            </div>
+          </div>
+
+          {/* Large Leave Seat / Decline button */}
+          <Button
+            onClick={() => {
+              sendMessage({
+                type: "decline_arena_invite",
+                uuid: myUuid,
+              })
+            }}
+            variant="outline"
+            className="w-full h-12 bg-slate-950 border-slate-800 hover:bg-rose-500/10 hover:border-rose-500/30 text-slate-400 hover:text-rose-400 text-xs font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-lg active:scale-95 flex items-center justify-center gap-1.5"
+          >
+            Decline / Leave Seat 🏳️
+          </Button>
+        </div>
+        {renderGlobalDialogs()}
+      </div>
+    )
   }
 
   // ⚔️ RENDER ACTIVE 1v1 BATTLE SCREEN
@@ -360,14 +440,13 @@ function RouteComponent() {
 
   if (!roomStore.code || !name) return
 
-  // Read team from DB if loaded, falling back to local storage
-  const team = myPlayer?.team || localStorage.getItem("team") || ""
+  // Read team from DB
+  const team = myPlayer?.team || ""
 
   const handleSwitchTeam = () => {
     const nextTeam = team === "boy" ? "girl" : "boy"
     const playerUuid = localStorage.getItem("uuid")
     if (playerUuid) {
-      localStorage.setItem("team", nextTeam)
       sendMessage({
         type: "switch_team",
         uuid: playerUuid,
@@ -544,23 +623,6 @@ function RouteComponent() {
         </Button>
       </Link>
 
-      {/* Spectator Arena Button */}
-      {isAdmin && (
-        <Link
-          to="/room/$roomUuid/battles/$battleId"
-          params={{ roomUuid, battleId: "arena" }}
-          search={{ code: roomStore.code ?? "" }}
-          className="block w-full"
-        >
-          <Button
-            variant="outline"
-            className="w-full h-10 bg-slate-950 border-slate-800 hover:bg-slate-900 hover:border-cyan-500/30 text-slate-350 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            <Tv className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-            Spectate Arena Battles
-          </Button>
-        </Link>
-      )}
 
       {/* Change Display Name & Switch Team Row */}
       <div className="flex gap-2">
