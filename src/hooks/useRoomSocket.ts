@@ -95,7 +95,8 @@ export function useRoomSocket(
             roomStore.setValue(event.room)
             break
           case "set.player": {
-            const finalCode = (typeof code === "string" ? code : null) || roomStore.code || ""
+            const finalCode =
+              (typeof code === "string" ? code : null) || roomStore.code || ""
             navigate({
               to: "/room/$roomUuid",
               params: { roomUuid },
@@ -109,7 +110,8 @@ export function useRoomSocket(
           case "clear.player": {
             localStorage.removeItem("name")
             localStorage.removeItem("team")
-            const finalCode = (typeof code === "string" ? code : null) || roomStore.code || ""
+            const finalCode =
+              (typeof code === "string" ? code : null) || roomStore.code || ""
             navigate({
               to: "/room/$roomUuid/set-name",
               params: { roomUuid },
@@ -135,7 +137,13 @@ export function useRoomSocket(
         }
       }
 
-      socketRef.current.onclose = () => {
+      socketRef.current.onclose = (e: CloseEvent) => {
+        if (e.code === 4404) {
+          roomStore.setSocketStatus("disconnected")
+          alert("Room does not exist.")
+          window.location.href = "/"
+          return
+        }
         roomStore.setSocketStatus("disconnected")
         if (shouldReconnect) {
           const timeout = Math.min(1000 * 2 ** retryRef.current, 30000)

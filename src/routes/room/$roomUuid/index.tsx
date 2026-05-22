@@ -141,16 +141,26 @@ function RouteComponent() {
           token: roomStore.token,
         },
       })
-    } else if (roomStore.value && !myPlayer) {
-      navigate({
-        to: "/room/$roomUuid/set-name",
-        params: {
-          roomUuid: roomUuid,
-        },
-        search: { code: roomStore.code },
-      })
+      return
     }
-  }, [myPlayer, roomStore.code, roomStore.value, roomUuid])
+
+    if (!roomStore.value) return // wait for the first room.update before deciding
+
+    // Wait a tick so that a room.update arriving right after set_player doesn't
+    // cause a false redirect back to set-name while the player is being registered
+    const timer = setTimeout(() => {
+      const isInRoom = roomStore.value?.players.some((p) => p.uuid === myUuid)
+      if (!isInRoom) {
+        navigate({
+          to: "/room/$roomUuid/set-name",
+          params: { roomUuid },
+          search: { code: roomStore.code },
+        })
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [myPlayer, myUuid, roomStore.code, roomStore.value, roomUuid])
 
   const onScore = (data: { score: number; time: string }) => {
     const { score, time } = data
